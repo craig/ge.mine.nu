@@ -1,0 +1,66 @@
+tor-ctrl is included in tor releases >= 0.2.0.9-alpha. Read the changelog. :)
+
+tor-ctrl is a commandline tool for executing commands on a tor server via the controlport.
+In order to get this to work, add "ControlPort 9051" and "CookieAuthentication 1" to your torrc and reload tor.
+Or - if you want a fixed password - leave out "CookieAuthentication 1" and use the following line to create
+the appropriate HashedControlPassword entry for your torrc (you need to change yourpassword, of course):
+echo "HashedControlPassword $(tor --hash-password yourpassword | tail -n 1)"
+
+tor-ctrl will return 0 if it was successful and 1 if not, 2 will be returned if something (telnet, xxd) is missing.
+4 will be returned if it executed serveral commands from a file.
+
+For setting the bandwidth for specific times of the day, I suggest calling tor-ctrl via cron, e.g.:
+
+0 22 * * * /path/to/tor-ctrl -c "SETCONF bandwidthrate=1mb"
+0 7 * * *  /path/to/tor-ctrl -c "SETCONF bandwidthrate=100kb"
+
+This would set the bandwidth to 100kb at 07:00 and to 1mb at 22:00.
+You can use notations like 1mb, 1kb or the number of bytes.
+
+Switch to clean circuits, so new application requests don't share any circuits with old ones. Also clears the client-side DNS cache. (Tor MAY rate-limit its response to this signal.):
+
+/path/to/tor-ctrl.sh -v -c "signal NEWNYM"
+
+
+Many, many other things are possible, see tor's control-spec!
+
+[stef@develbox:/home/stef]$ ./tor-ctrl -h
+
+tor-ctrl v1 by Stefan Behte (http://ge.mine.nu)
+You should have a look at http://tor.eff.org/svn/trunk/doc/spec/control-spec.txt
+
+usage: tor-ctrl [-switch] [variable]
+
+               [-c] [command] = command to execute
+                                notice: always "quote" your command
+
+               [-f] [file]    = file to execute commands from
+                                notice: only one command per line
+
+               [-a] [path]    = path to tor's control_auth_cookie
+                                default: /var/lib/tor/data/control_auth_cookie
+                                notice: do not forget to adjust your torrc
+
+               [-s] [var]     = sleep [var] seconds after each command sent
+                                default: 1 second
+                                notice: for GETCONF, you can use smaller pause times than for SETCONF
+                                        this is due to telnet's behaviour.
+
+               [-p] [var]     = Use password [var] instead of tor's control_auth_cookie
+                                default: not used
+                                notice: do not forget to adjust your torrc
+
+               [-P] [var]     = Tor ControlPort
+                                default: 9051
+
+               [-v]           = verbose
+                                default: not set
+                                notice: the default output is the return code ;)
+                                        You propably want to set -v when running manually
+
+               Examples:      ./tor-ctrl.sh -c "SETCONF bandwidthrate=1mb"
+                              ./tor-ctrl.sh -v -c "GETINFO version"
+                              ./tor-ctrl.sh -v -s 0 -P 9051 -p foobar -c "GETCONF bandwidthrate"
+
+
+

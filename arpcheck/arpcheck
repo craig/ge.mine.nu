@@ -1,0 +1,685 @@
+#!/bin/bash
+#  arpcheck
+#  Copyright (c) 2005 - 2006 by Stefan Behte
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#
+# arpcheck checks /proc/net/arp for MAC/IP combinations and compares them to a static or dynamic MAC list.
+# If something does not fit, you'll get an alarm which will also be logged. You can also run custom scripts.
+#
+# The MAC list is shorewall compatible, it's in the format:
+# [Interface] [MAC] {IP}
+# IP is optional!
+#
+# Example for a MAC list:
+# eth2          00:11:22:33:44:55               # you can add comments after "#"
+# eth2          00:de:ad:be:ef:00               192.168.13.37 # MAC/IP combo will be used
+# eth2          de:ad:be:ef:be:ee               #192.168.69.69 IP commented out, only MAC will be used
+# #eth2         de:ad:73:50:ba:be               # this line will be completely ignored
+#
+#
+# Features of ARP check:
+# - static mode (using a maclist in shorewall style)
+# - dynamic mode (learning network config)
+# - single mode (just run once and show the results)
+# - logging functions (you can also turn this off, which would not be wise, you can specify
+# - different logfiles for every type of logging event)
+# - detects lan to lan scans (you can specify the interfaces to check and threshold - you also can turn this on/off)
+#   ( only useful if you have multiple interfaces )
+# - blacklist support (you can specify the interfaces to check - you also can turn this on/off)
+# - whitelist support (you can specify the interfaces to check - you also can turn this on/off)
+# - nice colored output (you can turn this on/off)
+#
+# Copyright © 2005 - 2006 by Stefan Behte
+#
+# Changelog:
+# 19.06.05:   v1.0 - added colors
+#                  - corrected spelling mistakes
+#                  - fixed several errors in the code
+#                  - added logging functionality
+# 29.06.05:   v1.1 - uses /proc/net/arp directly (MUCH faster)
+#                  - changed output, added counter
+# 06.07.05:   v1.2 - changed the comments, added the header
+#                  - added "-single / -s" switch, just run the checks 1 time and do not run an endless loop
+#                  - now using multiple interfaces, specify them in INTERFACES (separate via space)
+#                  - added free line when sleeping
+# 13.07.05:   v1.3 - added script which gets called, if attack is detected
+#                  - added some comments
+#                  - added pidfile (/var/run/arpcheck.pid)
+#                  - added MAC blacklist, you can turn logging on/off for this via the variable LOGBLACK
+#                  - added -learn / -s mode (using temporary file ".learning")
+#                  - added lan scan detection
+# 14.07.05:   v1.4 - corrected many formating errors
+#                  - added SCANFACES
+#                  - added switch to turn colors on/off
+#                  - custum logging: you can log blacklist-attacks and lan scans to different files
+#                  - when new MAC/IP learned, we reduce the interval once
+# 18.07.05:        - fixed serious bug (when there was only interface+mac on one line an no comment->false detection as attacker)
+# 27.07.05:   v1.5 - separated the script into functions
+#                  - dynamic and static mode can now be run simoultanoiusly (some ifaces dynamic, some static, NOT both at once)
+#                  - added command line switches and help
+#                  - added -nc switch (no color)
+#                  - added -nd switch (no dynamic learning)
+#                  - added -ns switch (no static maclist checks)
+#                  - added -nb switch (no blacklist checks)
+#                  - added -nS switch (no scan detection)
+#                  - added -h / --help switch
+#                  - changed -single to -s only
+#                  - changed design, added more colors etc.
+# 29.08.05:   v1.6 - minor bugfixes
+#                  - checked performance, fixed bugs which slowed it down a lot
+#                  - added ".arp" hack: the whole script runs about 500% faster now :)
+#                  - minor bugfixes
+# 03.01.06:   v1.7 - releasing under GPL
+# 26.01.06:   v1.8 - changed checkblacklist() - now you can create blacklists like this:
+#                    * [iface{,iface,iface}] [mac]
+#                    * eth0,eth1 00:11:22:33:44:55       if you want to blacklist that mac on eth0,eth1
+#                    * eth2 00:11:22:33:44:55            if you just want to blacklist that mac on eth2
+#                    * all 00:11:22:33:44:55             if you want to black that mac on any interface
+#                  - you may also add commands after the mac, the script will just ignore them
+#                  - added whitelist, those hosts will be ignored in the other check; you can also log via LOGWHITE
+#                  - the format for the whitelist is the same as for the blacklist
+#                  - added -nw command line switch (no whitelist checks)
+#                  - totally changed the way scripts are called. Now it's WAY more better!
+#                  - I've created several useful examples for calling external script, they include:
+#                    * sending SMB/winpopup messages to administrators
+#                    * sending email
+#                    * inserting firewall rules with iptables (VERY useful for dynamic learning mode!) -> prevents users from changing IPs :)
+#                    * starting of special services, if a whitelist mac is seen
+#                  - I tested the examples and they should work for you with minor changes (change the IPs etc.)
+#                  - many little bugfixes (e.g. counting lines of *-lists gave "" if there was no such file)
+#                  - did some code cosmetics ;)
+#
+#
+# TODO:
+# - flood detection/protection (MAC in .flooddetect schreiben, nummer dahinter)
+# - fix the dirty checkmacs() hack (some time...)
+# - dynamic learning for only mac-authed hosts on static interfaces ?
+#
+# Planned for next release:
+# - add timeout for learned macs (RELEARN_INTERVAL)
+# - maybe add some variable that ensures you edited to config (like shorewall does), so people don't complain 
+#   that the tool does not work properly or so
+#
+# ARP check is verified to work on:
+# - Gentoo Linux Kernel 2.4
+# - Gentoo Linux Kernel 2.6
+# - SuSE Linux 9.1
+# - so it should work with any linux >= kernel-2.4 distro
+#
+# Some comments on the runtime:
+#  - of course, this script gets slower, the more entries you have in /proc/net/arp
+#  - This script was designed for smaller corporate networks with 100 - 250 PCs and is performant enough to handle that
+#    ( you should not have a large number of hosts on a single collision domain anyways )
+#  - as you can see below, it would also be OK for larger networks, e.g. HUGE LAN parties
+#  - Normal runtime for single check (all checks enabled): ~0.2s on an Athlon XP 2400
+#  - test: every check enabled, static maclist with 77 entries, blacklist with 1 entry, massive LAN scanning to produce many arp entries:
+#    -> /proc/net/arp entries vs. time to run: 28248/4.6s, 26610/4.3s, 24877/3.7s, 13566/1.6s, 12033/1.5s, 9697/1s, 7498/0.8s, 3694/0.5s, 479/0.3s
+#  - I think these runtimes are OK. On a normal LAN you will only have about ~50 entries or so and the script will need 0.2 seconds for all checks
+#  - You will only have more entries in /proc/net/arp if your box is router and someone scans on an other iface
+#
+# Written by Stefan Behte
+# Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!
+# Please also contact me, if you just like the tool. :)
+#
+# Stefan dot Behte at gmx dot net
+#
+
+
+############# CONFIGURATION ####################################################
+### ONLY CHANGE HERE !!!
+
+sINTERFACES="eth1 eth2"			# which interfaces to check against static maclist, must be separated via space
+dINTERFACES="eth0 eth3"			# interfaces which you want to check dynamically in "learning mode"
+					# WARNING: do NOT specify the same interface in both !!
+                                        # every interface can only be in static or dynamic (learning) mode. Choose one ;)
+
+sMACLIST="/etc/shorewall/maclist"	# path to our static maclist
+dMACLIST=".learned"			# path to our dynamic maclist (learning mode)
+LOGFILE="/var/log/arpcheck.log"		# where to log
+
+BLACKLIST="./BLACK"                     # blacklist with MACS/reason, works on ANY interface (change to specific iface) IP eth0,eth1
+LOGBLACK=$LOGFILE			# leave empty to not log blacklisted MACs
+
+WHITELIST="./WHITE"			# whitelist
+LOGWHITE=				# if you still want to log changes for whitelist hosts specify the logfile here
+
+SCANFACES="eth0 eth1 eth2 eth3"         # interfaces on which you want to detect scanners, leave empty if you don't want to use it
+SCANTHRES=10				# highest NR of 00:00:00:00:00:00 entries to ignore
+LOGSCAN=$LOGFILE                        # log the scan? leave empty if you do not want to log
+
+NORMALINTERVAL=20			# sleep interval when everything is ok
+ATTACKINTERVAL=10			# sleep interval, if attack detected
+
+RUNSCRIPT="n"				# run a script when attack occurs
+SCRIPTLOG=$LOGFILE			# file to log scriptruns to
+					# event               parameters
+					# MAC/IP do not fit   "$INTERFACE $MAC $IP $REALMAC"
+					# MAC not in list     "$INTERFACE $MAC $IP"
+                                        # MAC is blacklisted  "$INTERFACE $EVILMAC $IP"
+                                        # MAC is whitelisted  "$INTERFACE $GOODMAC $IP"
+
+COLOR=y					# do you want colored output?
+					# if you're running arpcheck via cron for example better turn this off!
+
+### End of basic config
+################################################################################
+### Running Scripts; only for advanced users
+
+# call parameters for scriptrun:
+#  $1         $2       $3      $4   $5
+# notfit  $INTERFACE $MAC     $IP $REALMAC	# IP/MAC do not fit
+# notlist $INTERFACE $MAC     $IP		# MAC is not in list
+# black   $INTERFACE $EVILMAC $IP		# MAC is on blacklist
+# white   $INTERFACE $GOODMAC $IP		# MAC is on whitelist
+
+scriptrun()
+{
+ # Here is are some examples which you can use with minor changes.
+ #
+ # notfit example: if a MAC/IP combo does not fit to your maclist, a DROP rule for that MAC will
+ # be inserted into chain ${INTERFACE}_in. Tested with shorewall, works fine. This is *VERY* useful,
+ # if you have enabled dynamic learning on an interface and want to lock out people that change their IP
+ # (evil people that try to circumvent port-filters on DHCP-Ranges, or want to be stealth while downloading
+ # Gigabytes of Warez...)
+ #
+ # iptables -nL eth2_in | grep "11:22:33:44:55:66"   will print the blocked mac:
+ # DROP       all  --  0.0.0.0/0            0.0.0.0/0           MAC 11:22:33:44:55:66
+ #
+ # notlist example: if a MAC/IP is found that's not on your maclist at all, SMB/winpopup messages are immediately
+ # sent to the Administrators. You need to specify IP:Netbios name. Works fine with multiple hosts.
+ #
+ # black example: mail the complete logfile to the administrator
+ #
+ # white example: for this example, create a whitelist that just contains the administrators iface and ip.
+ # then, exchange MIT-1 cookies from this host with your workstation (that has an X-Server, of course).
+ # Install wmnet, wmcpu and wmmemfree.
+ # Now, if that "good" admin mac is seen, this host will check if the admin's host is reachable and if wmnet, wmcpu 
+ # and wmmemfree are already displayed on the admins workstation. If not, they will be started. Voila! :)
+ # This is useful for the cool admin -> "Oh look, all those status screens pop up when he just pings the firewall!" ;)
+ #
+ # you can do MUCH more with this; for example stop specific services when there is an attack, just shut down
+ # the server, or automatically gratious ARP-kill the other host and so on... the possibilities are only limited
+ # by your fantasy :)
+ #
+ # If you have good ideas, please send them to me! My eMail is written down above.
+ #
+ # Notice: using scripts can have a severe security impact (e.g. if your script shuts down the server by
+ # accident or if it halts arpcheck - you won't be happy I guess!)
+ #
+ # I hope you like the examples.
+ #
+
+ case "$1" in
+  nofit)   iptables -nL ${2}_in | grep ^DROP | if ! grep -i "MAC $3" &>/dev/null
+           then
+            echo -n "Blocking MAC $3 on interface $2 by firewall: ";
+            /sbin/iptables -I ${2}_in -i ${2} --match mac --mac-source ${3} -j DROP
+            if [ "$?" = "0" ]
+            then
+             echo OK
+            else
+             echo FAILED
+            fi
+           else
+            echo "MAC $3 on interface $2 already blocked by firewall";
+            echo "To remove block, do:"
+            echo "/sbin/iptables -D ${2}_in -i ${2} --match mac --mac-source ${3} -j DROP"
+            echo "grep -vi \"${3}\" .learned >.ltmp; mv .ltmp .learned"
+           fi
+           echo
+           ;;
+  notlist) MSGIPS="192.168.0.2:ADMINBOX1 192.168.0.3:ADMINBOX2";
+           echo "WARNING: Rogue host! $INTERFACE $MAC $IP is not on our maclist." > .tmpmsg
+           for i in $MSGIPS
+           do
+            ip=`echo $i | cut -f 1 -d":"`
+            nbt=`echo $i | cut -f 2 -d":"`
+            smbclient -U Router -M $nbt -I $ip <.tmpmsg
+           done
+           rm .tmpmsg &>/dev/null
+           ;;
+  black)   mail root@somewhere.com < $LOGFILE;;
+  white)   WMRUN=`pgrep wmnet | wc -l`
+           if [ "$WMRUN" = "0" ]
+           then
+            ping -c1 -W1 $REMOTE &>/dev/null
+            if [ "$?" = "0" ]
+            then
+             DISPLAY="inet/${REMOTE}:0" wmnet -w -W eth0 -L eth0-WAN &
+             DISPLAY="inet/${REMOTE}:0" wmnet -w -W eth1 -L eth1-DMZ &
+             DISPLAY="inet/${REMOTE}:0" wmnet -w -W eth2 -L eth2-BBI &
+             DISPLAY="inet/${REMOTE}:0" wmnet -w -W eth3 -L eth3-WILD &
+             DISPLAY="inet/${REMOTE}:0" wmbluecpu &
+             DISPLAY="inet/${REMOTE}:0" wmmemfree -c -b &
+            fi
+           fi
+           ;;
+ esac
+
+ if [ "$SCRIPTLOG" != "" ]
+ then
+  echo "`date` $1 $2 $3 $4 $5" >> $SCRIPTLOG
+ fi
+ 
+}
+
+
+
+########################################################################################################################
+### Uuuh this command line stuff really sucks - I really need to rewrite it. I'm just too lazy right now.
+
+
+## init, cleanup
+if [ "$1" = "-nc" ] || [ "$2" = "-nc" ] || [ "$3" = "-nc" ] || [ "$4" = "-nc" ] || [ "$5" = "-nc" ] || [ "$6" = "-nc" ] || [ "$7" = "-nc" ]
+then
+ COLOR=n
+fi
+
+if [ "$1" = "-ns" ] || [ "$2" = "-ns" ] || [ "$3" = "-ns" ] || [ "$4" = "-ns" ] || [ "$5" = "-ns" ] || [ "$6" = "-ns" ] || [ "$7" = "-ns" ]
+then
+ sINTERFACES=""
+ sMACLIST="" 
+fi
+
+if [ "$1" = "-nd" ] || [ "$2" = "-nd" ] || [ "$3" = "-nd" ] || [ "$4" = "-nd" ] || [ "$5" = "-nd" ] || [ "$6" = "-nd" ] || [ "$7" = "-nd" ]
+then
+ dINTERFACES=""
+ dMACLIST="" 
+fi
+
+if [ "$1" = "-nb" ] || [ "$2" = "-nb" ] || [ "$3" = "-nb" ] || [ "$4" = "-nb" ] || [ "$5" = "-nb" ] || [ "$6" = "-nb" ] || [ "$7" = "-nb" ]
+then
+ BLACKLIST=""
+fi
+
+if [ "$1" = "-nw" ] || [ "$2" = "-nw" ] || [ "$3" = "-nw" ] || [ "$4" = "-nw" ] || [ "$5" = "-nw" ] || [ "$6" = "-nw" ] || [ "$7" = "-nw" ]
+then
+ WHITELIST=""
+fi
+
+if [ "$1" = "-nS" ] || [ "$2" = "-nS" ] || [ "$3" = "-nS" ] || [ "$4" = "-nS" ] || [ "$5" = "-nS" ] || [ "$6" = "-nS" ] || [ "$7" = "-nS" ]
+then
+ SCANFACES=""
+fi
+
+if [ "$COLOR" = "y" ]
+then
+ BANNER="\033[1;34mARP Check v1.8 by Stefan Behte\033[0m"
+ WARNING="\033[1;29m[\033[0m\033[1;31mWARNING\033[0m\033[1;29m]\033[0m"
+ LEARNED="\033[1;34mLEARNED\033[0m"
+ yOK="\033[1;33mOK\033[0m"
+ gOK="\033[1;32mOK\033[0m"
+ LAN="\033[1;34mLAN SCAN detection\033[0m"
+ STATIC="\033[1;34mSTATIC MAClist\033[0m"
+ DYNAMIC="\033[1;34mDYNAMIC learning\033[0m"
+ BLACKLI="\033[1;34mBLACKLIST\033[0m"
+ WHITELI="\033[1;34mWHITELIST\033[0m"
+else
+ BANNER="ARP Check v1.8 by Stefan Behte"
+ WARNING="[WARNING]"
+ LEARNED=LEARNED
+ yOK=OK
+ gOK=OK
+ LAN="LAN SCAN detection"
+ STATIC="STATIC MAClist"
+ DYNAMIC="DYNAMIC learning"
+ BLACKLI="BLACKLIST"
+ WHITELI="WHITELIST"
+fi
+
+if [ "$1" = "-h" ] || [ "$2" = "-h" ] || [ "$3" = "-h" ] || [ "$4" = "-h" ] || [ "$5" = "-h" ] || [ "$6" = "-h" ] || [ "$1" = "--help" ] || [ "$2" = "--help" ] || [ "$3" = "--help" ] || [ "$4" = "--help" ] || [ "$5" = "--help" ] || [ "$6" = "--help" ]
+then
+echo -e "\n$BANNER"
+cat <<EOF
+This tool can detect changes on MAC/IP combinations on your LAN and also LAN scanning.
+You have to edit the script and change the configuration settings in the header.
+
+It supports
+- multiple interfaces
+- static MAClist and dynamic learning mode
+- usage of both at the same time (not on the same interface)
+- logging of detailed warnings
+- different logfiles for different types of warnings
+- blacklist / whitelist support
+- running a script with the IP/MAC as parameters (e.g. iptables)
+- single run mode
+- nice, colored output :)
+
+usage: $0 {switches} // when ran without switches, the normal config in the header of the tool is used.
+                    -nd      // no dynamic learning
+                    -ns      // no static MAClist
+                    -nc      // no colors
+                    -nb      // no blacklist checks
+                    -nw      // no whitelist checks
+                    -nS      // no scan detection
+                    -s       // single run, just show results and quit
+                    -h       // this help
+
+EOF
+exit 0
+fi
+
+export INTERVAL=${NORMALINTERVAL}
+INTERFACES=${sINTERFACES}
+rm -f .arp .attack .scandet &>/dev/null
+
+# check if we're already running (exclude single mode)
+if [ "$1" != "-s" ] && [ "$1" != "--single" ]
+then
+ echo $$ > /var/run/arpcheck.pid
+fi
+
+if [ "$dINTERFACES" != "" ]
+then
+ rm -f .learned &>/dev/null
+ touch .learned
+fi
+
+if [ "$sINTERFACES" != "" ]
+then
+ NRMACS=$[ `grep -v "^#" /etc/shorewall/maclist | sort | uniq | wc -l` - 1 ]
+fi
+
+if [ -e $BLACKLIST ]
+then
+ BLACKNR=`wc -l $BLACKLIST | awk '{print $1}'`
+fi
+if [ "$BLACKNR" = "" ]
+then
+ BLACKNR=0
+fi
+
+if [ -e $WHITELIST ]
+then
+ WHITENR=`wc -l $WHITELIST | awk '{print $1}'`
+fi
+if [ "$WHITENR" = "" ]
+then
+ WHITENR=0
+fi
+
+
+
+checkmacs()
+{
+ INTERFACES=`cat .ifaces`
+ MACLIST=`cat .maclist`
+
+ for INTERFACE in $INTERFACES
+ do
+  grep "$INTERFACE$" .arp | sort -n | while read line	
+  do
+   IP=`echo $line | awk '{print $1}'`					# save IP
+   MAC=`echo $line | awk '{print $2}'`					# save MAC
+
+   # MAC in MAC list? # at the beginng -> commented out
+   grep -v "^#" $MACLIST | grep "^$INTERFACE" | if grep $MAC &>/dev/null
+   then									# ja -> OK
+    line=`grep -v "^#" $MACLIST | grep "^$INTERFACE" | grep $MAC`
+    three=`echo $line | awk '{print $3}'`
+
+    if [ "$three" = "${IP}" ]						# does the MAC fit to IP?
+    then   
+     printf "$INTERFACE $IP/$MAC\t[MAC+IP]\t[$gOK]\n"			# ja -> OK
+    else
+     echo $three | if grep "^#" &>/dev/null				# no -> test, if # in line IP commented out
+     then
+      printf "$INTERFACE $IP/$MAC\t[MAC]\t\t[$yOK]\n"			# ja -> OK
+     else								# no -> MAC has a different IP -> someone is evil
+      if [ "$three" = "" ]
+      then
+       printf "$INTERFACE $IP/$MAC\t[MAC]\t\t[$yOK]\n"
+      else
+       REALMAC=`grep -v "^#" $MACLIST | grep "^$INTERFACE" | grep "$MAC" | awk '{print $3}'`
+       printf "$INTERFACE $IP/$MAC\t[MAC+IP]\t$WARNING\t$REALMAC/$MAC uses IP: $IP\n"
+       echo "`date` $MAC/$REALMAC uses an other IP: $IP" >> $LOGFILE
+       if [ "$RUNSCRIPT" = "y" ]; then scriptrun nofit $INTERFACE $MAC $IP $REALMAC; fi
+       touch .attack
+      fi
+     fi
+    fi
+
+   else									# MAC not in list
+    printf "$INTERFACE $IP/$MAC\t[MAC]\t\t$WARNING\t$MAC not in MAC List!\n"
+    printf "`date` $INTERFACE/$MAC not in MAC List!\n" >> $LOGFILE
+    if [ "$RUNSCRIPT" = "y" ]; then scriptrun notlist $INTERFACE $MAC $IP; fi
+    touch .attack
+   fi
+  done
+
+# echo
+ done
+}	# checkmacs
+
+
+
+
+learnmacs()
+{
+ if [ "$dINTERFACES" != "" ]
+ then
+  for INTERFACE in $dINTERFACES
+  do
+   grep $INTERFACE .arp | awk '{print $2}' | while read MAC
+   do
+    if ! grep $MAC $dMACLIST &>/dev/null
+    then
+     grep $MAC .arp | grep $INTERFACE | awk '{print $3 "\t" $2 "\t" $1}' >> $dMACLIST
+     printf "`tail -n1 $dMACLIST | awk '{print $1 " " $3 "/" $2}'`\t\t\t[$LEARNED]\n"
+     touch .attack
+    fi
+   done
+  done
+ fi
+}
+
+
+
+detectscan()
+{
+ if [ "$SCANFACES" != "" ]
+ then
+  echo -e "$LAN enabled [$SCANFACES]:"
+  grep "00:00:00:00:00:00" /proc/net/arp > .scandet
+  ZEROMACS=0
+
+  for INTERFACE in $SCANFACES
+  do
+   ZEROMACS=`grep -c "$INTERFACE" .scandet`
+   if [ $ZEROMACS -gt $SCANTHRES ]
+   then
+    NRZ=`grep -c $INTERFACE .scandet`
+    printf "$INTERFACE 0.0.0.0/00:00:00:00:00:00\t\t\t\t$WARNING\tLAN scan detected on interface $INTERFACE, $NRZ entries\n"
+    if [ "$LOGSCAN" != "" ]
+    then
+     echo "`date` LAN scan detected: $INTERFACE/$NRZ " >> $LOGSCAN
+    fi
+    touch .attack
+   fi
+  done
+ fi
+}
+
+
+
+checkblacklist()
+{
+ if [ ! -e $BLACKLIST ]
+ then
+  return -1
+ fi
+
+ cat $BLACKLIST | while read line
+ do
+  EVILMAC=`echo $line | awk '{print $2}'`
+  INTERFACES=`echo $line | awk '{print $1}' | tr -s ',' ' '`	# eth0,eth1
+
+  for INTERFACE in $INTERFACES
+  do
+   if [ "$INTERFACE" = "all" ] 			# grep ^$INTERFACE :)
+   then
+    INTERFACE=""
+   fi
+
+   tmpline=`grep $EVILMAC .arp`
+   echo $tmpline | awk '{print $3}' | if grep ^${INTERFACE} &>/dev/null
+   then
+    IP=`grep -i $EVILMAC .arp | awk '{print $1}'`
+    INTERFACE=`grep -i $EVILMAC .arp | awk '{print $3}'`
+
+    printf "$INTERFACE $IP/$EVILMAC\t[MAC]\t\t$WARNING\t$EVILMAC is BLACKLISTED!\n"
+    if [ "$LOGBLACK" != "" ]
+    then
+     printf "`date` $INTERFACE/$EVILMAC/$IP is BLACKLISTED!\n" >> $LOGBLACK
+    fi
+    if [ "$RUNSCRIPT" = "y" ]; then scriptrun black $INTERFACE $EVILMAC $IP; fi
+    touch .attack
+   fi
+  done
+
+ done
+}
+
+
+
+
+
+filterwhitelist()
+{
+ if [ ! -e $WHITELIST ]
+ then
+  return -1
+ fi
+
+ cat $WHITELIST | while read line
+ do
+  GOODMAC=`echo $line | awk '{print $2}'`
+  INTERFACES=`echo $line | awk '{print $1}' | tr -s ',' ' '`	# eth0,eth1
+
+  for INTERFACE in $INTERFACES
+  do
+   if [ "$INTERFACE" = "all" ] 			# grep ^$INTERFACE :)
+   then
+    INTERFACE=""
+   fi
+
+   tmpline=`grep $GOODMAC .arp`
+   echo $tmpline | awk '{print $3}' | if grep ^${INTERFACE} &>/dev/null
+   then
+    IP=`grep -i $GOODMAC .arp | awk '{print $1}'`
+    INTERFACE=`grep -i $GOODMAC .arp | awk '{print $3}'`
+    grep -v "$tmpline" .arp > .arp.
+    mv .arp. .arp &>/dev/null
+
+    printf "$INTERFACE $IP/$GOODMAC\t[MAC]\t\t$OK\t$GOODMAC is WHITELISTED! Filtering out.\n"
+    if [ "$LOGWHITE" != "" ]
+    then
+     printf "`date` $INTERFACE/$GOODMAC/$IP is WHITELISTED!\n" >> $LOGBLACK
+    fi
+    if [ "$RUNSCRIPT" = "y" ]; then scriptrun white $INTERFACE $EVILMAC $IP; fi
+
+   fi
+  done
+
+ done
+}
+
+
+
+
+
+
+
+
+pause()
+{
+ echo
+
+ ##### choose correct sleeping interval (depends on state normal/attacked)
+ if [ -e .attack ]
+ then
+  INTERVAL=$ATTACKINTERVAL
+  rm .attack
+ else
+  INTERVAL=$NORMALINTERVAL
+ fi
+ 
+ ##### that cool counter ;) [seconds slept/seconds to sleep]
+ echo -n "sleeping... ["
+ for i in `seq 1 $INTERVAL` 
+ do
+  echo -n "${i}/${INTERVAL}]"
+  sleep 1
+  for j in `seq -1 $[${#i} + ${#INTERVAL}]`
+  do
+   echo -n -e '\x08'
+  done
+ done
+}
+
+
+
+while [ 1 ]
+do
+ clear
+ echo -e "$BANNER\n"
+
+ detectscan
+
+ if [ "$dINTERFACES" != "" ] || [ "$sINTERFACES" != "" ] || [ "$BLACKLIST" != "" ]
+ then
+  grep -v "00:00:00:00:00:00" /proc/net/arp | awk '{print $1 " " $4 " " $6}' > .arp
+ fi
+
+ if [ "$BLACKLIST" != "" ]
+ then
+  echo -e "\n$BLACKLI enabled ($BLACKNR entries)"
+  checkblacklist
+ fi
+
+ if [ "$WHITELIST" != "" ]
+ then
+  echo -e "\n$WHITELI enabled ($WHITENR entries)"
+  filterwhitelist
+ fi
+
+ if [ "$sINTERFACES" != "" ]
+ then
+  echo -e "\n$STATIC ($sMACLIST, $NRMACS entries) [$sINTERFACES]:"
+  echo $sINTERFACES > .ifaces
+  echo $sMACLIST > .maclist
+  checkmacs
+ fi
+ if [ "$dINTERFACES" != "" ]
+ then
+  echo -e "\n$DYNAMIC (`wc -l .learned | awk '{print $1}'` found) [$dINTERFACES]:"
+  learnmacs
+  echo $dINTERFACES > .ifaces
+  echo $dMACLIST > .maclist
+  checkmacs
+ fi
+
+ if [ "$1" = "-s" ] || [ "$2" = "-s" ] || [ "$3" = "-s" ] || [ "$4" = "-s" ] || [ "$5" = "-s" ] || [ "$6" = "-s" ]  || [ "$7" = "-s" ]
+ then
+  echo
+  break
+ fi
+
+ pause
+
+done
+rm /var/run/arpcheck.pid .learned .ifaces .maclist .scandet .arp &>/dev/null

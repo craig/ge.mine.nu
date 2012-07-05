@@ -1,0 +1,11 @@
+tor-ctrl	-	tor-ctrl is a commandline tool for executing commands on a tor server via the controlport.
+lbd		-	lbd (load balancing detector) detects if a given domain uses DNS and/or HTTP Load-Balancing
+arpcheck	-	arpcheck checks /proc/net/arp for MAC/IP combinations and compares them to a static or dynamic MAC list.
+
+Written by Stefan Behte
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!
+Please also contact me, if you just like the tool. :)
+
+Stefan dot Behte at gmx dot net
+
+Released under the GPL-v2

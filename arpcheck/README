@@ -1,0 +1,169 @@
+arpcheck checks /proc/net/arp for MAC/IP combinations and compares them to a static or dynamic MAC list.
+If something does not fit, you'll get an alarm which will also be logged. You can also run custom scripts.
+
+This is useful, if you're a router with multiple interfaces (e.g. WAN, LAN, DMZ) and want to check
+if anyone from your clients is evil and does some arpspoofing (mitm) or changes his IP.
+
+Features of ARPcheck:
+- static mode (using a maclist in shorewall style)
+- dynamic mode (learning network config)
+- single mode (just run once and show the results)
+- logging functions (you can also turn this off, which would not be wise)
+- calling external scripts, see the examples (e.g. injection of iptables rules)
+- you can specify different logfiles for every type of logging event
+- detects lan to lan scans (you can specify the interfaces to check and threshold - you also can turn this on/off)
+( only useful if you have multiple interfaces )
+- blacklist support (you can specify the interfaces to check - you also can turn this on/off)
+- whitelist support (you can specify the interfaces to check - you also can turn this on/off)
+- nice colored output (you can turn this on/off)
+- should run on any linux distro (kernel >= 2.4)
+
+Usage:
+
+       ./arpcheck {switches} // when ran without switches, the normal config in the header of the tool is used.
+                    -nd      // no dynamic learning
+                    -ns      // no static MAClist
+                    -nc      // no colors
+                    -nb      // no blacklist checks
+                    -nw      // no whitelist checks
+                    -nS      // no scan detection
+                    -s       // single run, just show results and quit
+                    -h       // this help
+
+Commandline does not support all switches!
+It's the best idea to edit the file and change the settings in the header to fit to your network!
+I suggest running it in a screen, because you can attach/detach all the time to see what's going on:
+
+screen -dmS arpcheck ./arpcheck
+
+
+MAC list
+The MAC list is shorewall compatible, it's in the format:
+
+ [Interface] [MAC] {IP}
+ IP is optional!
+
+ Example for a MAC list:
+ eth2          00:11:22:33:44:55               # you can add comments after "#"
+ eth2          00:de:ad:be:ef:00               192.168.13.37 # MAC/IP combo will be used
+ eth2          de:ad:be:ef:be:ee               #192.168.69.69 IP commented out, only MAC will be used
+ #eth2         de:ad:73:50:ba:be               # this line will be completely ignored
+
+
+Changelog
+
+ 19.06.2005: v1.0 - added colors
+                  - corrected spelling mistakes
+                  - fixed several errors in the code
+                  - added logging functionality
+ 29.06.2005: v1.1 - uses /proc/net/arp directly (MUCH faster)
+                  - changed output, added counter
+ 06.07.2005: v1.2 - changed the comments, added the header
+                  - added "-single / -s" switch, just run the checks 1 time and do not run an endless loop
+                  - now using multiple interfaces, specify them in INTERFACES (separate via space)
+                  - added free line when sleeping
+ 13.07.2005: v1.3 - added script which gets called, if attack is detected
+                  - added some comments
+                  - added pidfile (/var/run/arpcheck.pid)
+                  - added MAC blacklist, you can turn logging on/off for this via the variable LOGBLACK
+                  - added -learn / -s mode (using temporary file ".learning")
+                  - added lan scan detection
+ 14.07.2005: v1.4 - corrected many formating errors
+                  - added SCANFACES
+                  - added switch to turn colors on/off
+                  - custum logging: you can log blacklist-attacks and lan scans to different files
+                  - when new MAC/IP learned, we reduce the interval once
+ 18.07.2005:      - fixed serious bug (when there was only interface+mac on one line an no comment->false detection as attacker)
+ 27.07.2005: v1.5 - separated the script into functions
+                  - dynamic and static mode can now be run simoultanoiusly (some ifaces dynamic, some static, NOT both at once)
+                  - added command line switches and help
+                  - added -nc switch (no color)
+                  - added -nd switch (no dynamic learning)
+                  - added -ns switch (no static maclist checks)
+                  - added -nb switch (no blacklist checks)
+                  - added -nS switch (no scan detection)
+                  - added -h / --help switch
+                  - changed -single to -s only
+                  - changed design, added more colors etc.
+ 29.08.2005: v1.6 - minor bugfixes
+                  - checked performance, fixed bugs which slowed it down a lot
+                  - added ".arp" hack: the whole script runs about 500% faster now :)
+                  - minor bugfixes
+ 03.01.06:   v1.7 - releasing under GPL
+ 26.01.06:   v1.8 - changed checkblacklist() - now you can create blacklists like this:
+                    * [iface{,iface,iface}] [mac]
+                    * eth0,eth1 00:11:22:33:44:55       if you want to blacklist that mac on eth0,eth1
+                    * eth2 00:11:22:33:44:55            if you just want to blacklist that mac on eth2
+                    * all 00:11:22:33:44:55             if you want to black that mac on any interface
+                  - you may also add commands after the mac, the script will just ignore them
+                  - added whitelist, those hosts will be ignored in the other check; you can also log via LOGWHITE
+                  - the format for the whitelist is the same as for the blacklist
+                  - added -nw command line switch (no whitelist checks)
+                  - totally changed the way scripts are called. Now it's WAY more better!
+                  - I've created several useful examples for calling external script, they include:
+                    * sending SMB/winpopup messages to administrators
+                    * sending email
+                    * inserting firewall rules with iptables (VERY useful for dynamic learning mode!) -> prevents users from changing IPs :)
+                    * starting of special services, if a whitelist mac is seen
+                  - I tested the examples and they should work for you with minor changes (change the IPs etc.)
+                  - many little bugfixes (e.g. counting lines of *-lists gave "" if there was no such file)
+                  - did some code cosmetics ;)
+
+TODO
+- flood detection/protection (MAC in .flooddetect schreiben, nummer dahinter)
+- fix the dirty checkmacs() hack!
+- timeout bei den learned macs
+- iptables support (block attacking devices) ?
+
+Planned for next release:
+- add timeout for learned macs (RELEARN_INTERVAL)
+- maybe add some variable that ensures you edited to config (like shorewall does), so people don't complain that the tool does not work properly or so
+
+Runtime
+- of course, this script gets slower, the more entries you have in /proc/net/arp
+- This script was designed for smaller corporate networks with 100 - 250 PCs and is performant enough to handle that ( you should not have a large number of hosts on a single collision domain anyways )
+- as you can see below, it would also be OK for larger networks, e.g. HUGE LAN parties
+- Normal runtime for single check (all checks enabled): ~0.2s on an Athlon XP 2400
+- test: every check enabled, static maclist with 77 entries, blacklist with 1 entry, massive LAN scanning to produce many arp entries:
+-> /proc/net/arp entries vs. time to run: 28248/4.6s, 26610/4.3s, 24877/3.7s, 13566/1.6s, 12033/1.5s, 9697/1s, 7498/0.8s, 3694/0.5s, 479/0.3s
+- I think these runtimes are OK. On a normal LAN you will only have about ~50 entries or so and the script will need 0.2 seconds for all checks
+- You will only have more entries in /proc/net/arp if your box is router and someone scans on an other iface
+
+
+ARPcheck in action looks like this (colored):
+
+ARP Check v1.8 by Stefan Behte
+
+LAN SCAN detection enabled [eth0 eth1 eth2 eth3]:
+
+BLACKLIST enabled (1 entries)
+
+WHITELIST enabled (0 entries)
+
+STATIC MAClist (/etc/shorewall/maclist, 80 entries) [eth1 eth2]:
+eth1 192.168.0.250/00:0B:CD:D1:C1:C7    [MAC+IP]        [OK]
+eth1 192.168.0.252/00:02:A5:8C:E3:31    [MAC+IP]        [OK]
+eth1 192.168.0.254/00:02:A5:8C:E3:20    [MAC+IP]        [OK]
+eth2 192.168.66.1/00:11:2F:D9:A7:03     [MAC+IP]        [OK]
+eth2 192.168.66.9/00:11:2F:03:6D:27     [MAC]           [WARNING]       00:11:2F:03:6D:27 not in MAC List!
+eth2 192.168.73.1/00:11:2F:03:5B:F1     [MAC+IP]        [OK]
+eth2 192.168.73.2/00:11:2F:03:5B:29     [MAC+IP]        [OK]
+eth2 192.168.73.3/00:11:2F:04:5D:34     [MAC+IP]        [WARNING]       192.168.73.9/00:11:2F:04:5D:34 uses IP: 192.168.73.3
+eth2 192.168.74.3/00:0F:3D:48:EF:79     [MAC]           [OK]
+
+DYNAMIC learning (12 found) [eth0 eth3]:
+eth3 192.168.128.199/00:11:2F:04:5C:49                  [LEARNED]
+eth0 192.168.192.2/00:09:5F:2D:32:E3    [MAC+IP]        [OK]
+eth3 192.168.128.199/00:11:2F:04:5C:49  [MAC+IP]        [OK]
+
+sleeping... [07/10]
+
+
+Written by Stefan Behte
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!
+Please also contact me, if you just like the tool. :)
+
+Stefan dot Behte at gmx dot net
+
+Released under the GPL-v2
+

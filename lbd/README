@@ -1,0 +1,67 @@
+lbd (load balancing detector) detects if a given domain uses DNS and/or HTTP Load-Balancing
+(via Server: and Date: header and diffs between server answers).
+
+This is useful for pentests and for curious people. ;)
+
+lbd in action looks like this:
+[sb@ge.mine.nu]$ ./lbd www.map24.de
+
+lbd - load balancing detector 0.1 - Checks if a given domain uses load-balancing.
+Written by Stefan Behte (http://ge.mine.nu)
+Proof-of-concept! Might give false positives.
+
+Checking for DNS-Loadbalancing: NOT FOUND
+Checking for HTTP-Loadbalancing [Server]:
+Apache/1.3.33 (Unix) PHP/4.3.11
+Apache/1.3.34 (Unix) PHP/4.3.11
+Apache/2.2.0 (Unix) PHP/4.4.2
+FOUND
+
+Checking for HTTP-Loadbalancing [Date]: 18:32:56, 18:32:56, 18:32:57, 18:32:58, 18:32:58, 18:32:59, 18:33:00, 18:33:00, 18:33:01, 18:33:02, 18:33:02, 18:33:03, 18:33:04, 18:33:04, 18:33:05, 18:33:06, 18:33:05, FOUND
+
+Checking for HTTP-Loadbalancing [Diff]: FOUND
+< Server: Apache/1.3.33 (Unix) PHP/4.3.11
+< X-Powered-By: PHP/4.3.11
+> Server: Apache/2.2.0 (Unix) PHP/4.4.2
+> X-Powered-By: PHP/4.4.2
+
+www.map24.de does Load-balancing. Found via Methods: HTTP[Server] HTTP[Date] HTTP[Diff]
+
+
+[sb@ge.mine.nu]$ ./lbd www.microsoft.com
+
+lbd - load balancing detector 0.1 - Checks if a given domain uses load-balancing.
+Written by Stefan Behte (http://ge.mine.nu)
+Proof-of-concept! Might give false positives.
+
+Checking for DNS-Loadbalancing: FOUND
+lb1.www.ms.akadns.net has address 207.46.20.60
+lb1.www.ms.akadns.net has address 207.46.198.30
+lb1.www.ms.akadns.net has address 207.46.198.60
+lb1.www.ms.akadns.net has address 207.46.199.30
+lb1.www.ms.akadns.net has address 207.46.225.60
+lb1.www.ms.akadns.net has address 207.46.19.30
+lb1.www.ms.akadns.net has address 207.46.19.60
+lb1.www.ms.akadns.net has address 207.46.20.30
+
+Checking for HTTP-Loadbalancing [Server]:
+Microsoft-IIS/6.0
+NOT FOUND
+
+Checking for HTTP-Loadbalancing [Date]: 18:30:45, 18:30:46, 18:30:47, 18:30:48, 18:30:49, 18:30:50, 18:30:51, 18:30:51, 18:30:53, 18:30:53, 18:30:54, 18:30:55, 18:30:57, 18:30:57, 18:30:58, 18:30:59, 18:31:01, 18:31:01, 18:31:02, 18:31:03, 18:31:04, 18:31:05, 18:31:06, 18:31:07, 18:31:08, 18:31:09, 18:31:10, 18:31:11, 18:31:12, 18:31:13, 18:31:13, 18:31:14, 18:31:15, 18:31:16, 18:31:17, 18:31:18, 18:31:19, 18:31:20, 18:31:21, 18:31:22, 18:31:23, 18:31:25, 18:31:26, 18:31:26, 18:31:27, 18:31:28, 18:31:30, 18:31:30, 18:31:31, 18:31:33, NOT FOUND
+
+Checking for HTTP-Loadbalancing [Diff]: FOUND
+< Content-Length: 23012
+> Content-Length: 23011
+
+www.microsoft.com does Load-balancing. Found via Methods: DNS HTTP[Diff]
+
+
+Written by Stefan Behte
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!
+Please also contact me, if you just like the tool. :)
+
+Stefan dot Behte at gmx dot net
+
+Released under the GPL-v2
+
