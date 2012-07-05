@@ -1,0 +1,44 @@
+<HTML><HEAD><TITLE>:: ge.mine.nu ::</TITLE></HEAD>
+<BODY BGCOLOR=BLACK TEXT=WHITE ALINK=RED VLINK=GRAY LINK=LIGHTGREEN>
+
+<H2> <A HREF="code/randmac">randmac</A> - change your MAC to something random at startup. (14 Downloads)</H2>
+
+randmac - Script that gives your interface a new MAC-Address.<BR>
+It's useful if you've cloned your VMWare/XEN Images and wonder why you<BR>
+have problems reaching the VMs (they have the same MAC adresses).<BR>
+<BR>
+If you plan changing your MAC regularly, have a look at <A HREF="http://ge.mine.nu/ifswitch.html">ifswitch</A>.<BR>
+<BR>
+<b>To run this on startup do:</b><BR>
+<BR>
+SLES9 / SuSE:<BR>
+wget http://ge.mine.nu/code/randmac -O /etc/init.d/randmac<BR>
+chmod +x /etc/init.d/randmac<BR>
+cd /etc/init.d/rc3.d<BR>
+ln -S ./S99randmac ../randmac<BR>
+<BR>
+Gentoo:<BR>
+wget http://ge.mine.nu/code/randmac -O /etc/init.d/randmac<BR>
+chmod +x /etc/init.d/randmac<BR>
+echo "/etc/init.d/randmac" >> /etc/conf.d/local.start<BR>
+<BR>
+Debian / Ubuntu:<BR>
+wget http://ge.mine.nu/code/randmac -O /etc/init.d/randmac<BR>
+chmod +x /etc/init.d/randmac<BR>
+echo "/etc/init.d/randmac" >> /etc/init.d/rc.local<BR>
+chmod 755 /etc/init.d/rc.local<BR>
+ln -s /etc/init.d/rc.local /etc/rcS.d/S99rc.local<BR>
+<BR>
+
+<HR>
+
+Written by Stefan Behte<BR>
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!<BR>
+Please also contact me, if you just like the tool. :)<BR>
+<BR>
+Stefan dot Behte at gmx dot net<BR>
+<BR>
+Released under the <A HREF="http://www.gnu.org/copyleft/gpl.txt">GPL-v2</A>
+<BR>
+
+</BODY></HTML>

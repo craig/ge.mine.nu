@@ -1,3 +1,10 @@
+Apparently, dyndns.org wants people using their free services to migrate to their payed ones. I was still using http://ge.mine.nu/; I used the domain back from 2005, but didn't update it for a long time alreay. Somehow, I recently lost access to that domain, and I cannot get it back without paying, it seems. I've decided to put the original code and page online on github, so that people can still download my stuff.
+
+I created four folders here; the website and old crap won't be updated; but maybe tor-ctrl, lbd and arpcheck might, so I put them in separate directories. Have fun! 
+
+website
+	the complete website
+
 tor-ctrl	
 	a commandline tool for executing commands on a tor server via the controlport
 

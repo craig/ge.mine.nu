@@ -1,0 +1,70 @@
+<HTML><HEAD><TITLE>:: ge.mine.nu ::</TITLE></HEAD>
+<BODY BGCOLOR=BLACK TEXT=WHITE ALINK=RED VLINK=GRAY LINK=LIGHTGREEN>
+
+<script type="text/javascript"><!--
+google_ad_client = "pub-3450986717914812";
+/* 728x15, Erstellt 18.06.10 */
+google_ad_slot = "7595731693";
+google_ad_width = 728;
+google_ad_height = 15;
+//-->
+</script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+<H2> <A HREF="code/mass-blue">mass-blue</A> - bluetooth auto-discovering mass-file-sending tool (80 Downloads)</H2>
+
+I wrote this tool because I had to help deploying software on 200 mobile phones.<BR>
+It's also useful for commercials (sounds, pictures) and as I said mass-deploying software.<BR>
+<BR>
+<B>Features:</B><BR>
+- automatic device discovery<BR>
+- automatic obex channel detection<BR>
+- function to use an existing list of devices that the file was already sent to (-F)<BR>
+- function to send the file only once to every device (-o)<BR>
+- you can set the sleeping interval between searches<BR>
+<BR>
+<BR>
+[sb@develbox ~/code]$ ./mass-blue<BR>
+<BR>
+mass-blue v0.1 by Stefan Behte<BR>
+Mass-deployment tool for bluetooth files<BR>
+<BR>
+usage: ./mass-blue -f [file to send] -p [filename on the phone] -s [sleep between scans] -F [listfile] -o {only send once to every device}<BR>
+<BR>
+<H2>Examples:</H2>[sb@develbox ~/code]$ ./mass-blue -f /tmp/PIC-0023.jpg -p me.jpg -o<BR>
+<BR>
+local file:     /tmp/PIC-0023.jpg<BR>
+remote file:    me.jpg<BR>
+sleep interval: 15<BR>
+list:           /tmp/.mass-blue.tmp<BR>
+<BR>
+name=/tmp/PIC-0023.jpg, size=89989<BR>
+Local device 00:16:38:BC:3D:02<BR>
+Remote device 00:15:B8:EF:BB:B5 (2)<BR>
+Connection established<BR>
+name=/tmp/PIC-0023.jpg, size=89989<BR>
+Local device 00:16:38:BC:3D:02<BR>
+Remote device 00:15:62:01:21:9C (6)<BR>
+Connection established<BR>
+<BR>
+<BR>
+
+If you want to sent different files, I recommend starting the script twice with "-F /tmp/.mass-blue-$RANDOM".<BR>
+<BR>
+<B>Have fun!</B>
+<BR>
+<HR>
+
+Written by Stefan Behte<BR>
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!<BR>
+Please also contact me, if you just like the tool. :)<BR>
+ <BR>
+Stefan dot Behte at gmx dot net<BR>
+<BR>
+Released under the <A HREF="http://www.gnu.org/copyleft/gpl.txt">GPL-v2</A>
+</PRE>
+<BR>
+
+</BODY></HTML>

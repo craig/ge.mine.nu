@@ -1,0 +1,92 @@
+<HTML><HEAD><TITLE>:: ge.mine.nu ::</TITLE></HEAD>
+<BODY BGCOLOR=BLACK TEXT=WHITE ALINK=RED VLINK=GRAY LINK=LIGHTGREEN>
+
+<script type="text/javascript"><!--
+google_ad_client = "pub-3450986717914812";
+/* 728x15, Erstellt 18.06.10 */
+google_ad_slot = "7595731693";
+google_ad_width = 728;
+google_ad_height = 15;
+//-->
+</script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+
+<H2> <A HREF="code/lbd">lbd-0.2</A> (3622 Downloads)</H2>
+
+lbd (load balancing detector) detects if a given domain uses DNS and/or HTTP Load-Balancing<BR>
+(via Server: and Date: header and diffs between server answers).<BR>
+<BR>
+This is useful for pentests and for curious people. ;)<BR>
+<BR>
+<H3><A NAME="action">lbd</A> in action looks like this:</H3>
+[sb@ge.mine.nu]$ ./lbd www.map24.de<BR>
+<BR>
+lbd - load balancing detector 0.1 - Checks if a given domain uses load-balancing.<BR>
+                                    Written by Stefan Behte (http://ge.mine.nu)<BR>
+                                    Proof-of-concept! Might give false positives.<BR>
+<BR>
+Checking for DNS-Loadbalancing: NOT FOUND<BR>
+Checking for HTTP-Loadbalancing [Server]:<BR>
+ Apache/1.3.33 (Unix) PHP/4.3.11<BR>
+ Apache/1.3.34 (Unix) PHP/4.3.11<BR>
+ Apache/2.2.0 (Unix) PHP/4.4.2<BR>
+ FOUND<BR>
+<BR>
+Checking for HTTP-Loadbalancing [Date]: 18:32:56, 18:32:56, 18:32:57, 18:32:58, 18:32:58, 18:32:59, 18:33:00, 18:33:00, 18:33:01, 18:33:02, 18:33:02,
+18:33:03, 18:33:04, 18:33:04, 18:33:05, 18:33:06, 18:33:05, FOUND<BR>
+<BR>
+Checking for HTTP-Loadbalancing [Diff]: FOUND<BR>
+< Server: Apache/1.3.33 (Unix) PHP/4.3.11<BR>
+< X-Powered-By: PHP/4.3.11<BR>
+> Server: Apache/2.2.0 (Unix) PHP/4.4.2<BR>
+> X-Powered-By: PHP/4.4.2<BR>
+<BR>
+www.map24.de does Load-balancing. Found via Methods: HTTP[Server] HTTP[Date] HTTP[Diff]<BR>
+<BR>
+<HR><BR>
+[sb@ge.mine.nu]$ ./lbd www.microsoft.com<BR>
+<BR>
+lbd - load balancing detector 0.1 - Checks if a given domain uses load-balancing.<BR>
+                                    Written by Stefan Behte (http://ge.mine.nu)<BR>
+                                    Proof-of-concept! Might give false positives.<BR>
+<BR>
+Checking for DNS-Loadbalancing: FOUND<BR>
+lb1.www.ms.akadns.net has address 207.46.20.60<BR>
+lb1.www.ms.akadns.net has address 207.46.198.30<BR>
+lb1.www.ms.akadns.net has address 207.46.198.60<BR>
+lb1.www.ms.akadns.net has address 207.46.199.30<BR>
+lb1.www.ms.akadns.net has address 207.46.225.60<BR>
+lb1.www.ms.akadns.net has address 207.46.19.30<BR>
+lb1.www.ms.akadns.net has address 207.46.19.60<BR>
+lb1.www.ms.akadns.net has address 207.46.20.30<BR>
+<BR>
+Checking for HTTP-Loadbalancing [Server]:<BR>
+ Microsoft-IIS/6.0<BR>
+ NOT FOUND<BR>
+<BR>
+Checking for HTTP-Loadbalancing [Date]: 18:30:45, 18:30:46, 18:30:47, 18:30:48, 18:30:49, 18:30:50, 18:30:51, 18:30:51, 18:30:53, 18:30:53, 18:30:54,
+18:30:55, 18:30:57, 18:30:57, 18:30:58, 18:30:59, 18:31:01, 18:31:01, 18:31:02, 18:31:03, 18:31:04, 18:31:05, 18:31:06, 18:31:07, 18:31:08, 18:31:09,
+18:31:10, 18:31:11, 18:31:12, 18:31:13, 18:31:13, 18:31:14, 18:31:15, 18:31:16, 18:31:17, 18:31:18, 18:31:19, 18:31:20, 18:31:21, 18:31:22, 18:31:23,
+18:31:25, 18:31:26, 18:31:26, 18:31:27, 18:31:28, 18:31:30, 18:31:30, 18:31:31, 18:31:33, NOT FOUND<BR>
+<BR>
+Checking for HTTP-Loadbalancing [Diff]: FOUND<BR>
+< Content-Length: 23012<BR>
+> Content-Length: 23011<BR>
+<BR>
+www.microsoft.com does Load-balancing. Found via Methods: DNS HTTP[Diff]<BR>
+<BR>
+<HR>
+<BR>
+Written by Stefan Behte<BR>
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!<BR>
+Please also contact me, if you just like the tool. :)<BR>
+ <BR>
+Stefan dot Behte at gmx dot net<BR>
+<BR>
+Released under the <A HREF="http://www.gnu.org/copyleft/gpl.txt">GPL-v2</A><BR>
+<BR>
+
+</BODY></HTML>

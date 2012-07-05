@@ -1,0 +1,36 @@
+<HTML><HEAD><TITLE>:: ge.mine.nu ::</TITLE></HEAD>
+<BODY BGCOLOR=BLACK TEXT=WHITE ALINK=RED VLINK=GRAY LINK=LIGHTGREEN>
+
+<H3>Patch for Gentoo Baselayout (tested with 1.11.14-r5)<BR>for overwriting the swap space on halting the system</H3>
+<A HREF="rc_swap_erase.patch">rc_swap_erase.patch</A><BR>
+<A HREF="halt.sh_swap_erase.patch">halt.sh_swap_erase.patch</A>
+<PRE>
+
+<H1>It was integrated into portage. You just had to set RC_SWAP_ERASE="yes" in /etc/conf.d/rc but it was removed again. :(</H1>
+
+
+<B>Installation:</B>
+wget http://ge.mine.nu/rc_swap_erase.patch
+wget http://ge.mine.nu/halt.sh_swap_erase.patch
+
+patch /etc/init.d/halt.sh < halt.sh_swap_erase.patch
+patch /etc/conf.d/rc < rc_swap_erase.patch
+
+<B>Uninstall:</B>
+patch -R /etc/init.d/halt.sh < halt.sh_swap_erase.patch
+patch -R /etc/conf.d/rc < rc_swap_erase.patch
+
+I hope this will be added to baselayout soon!
+
+<HR>
+Written by Stefan Behte
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!
+Please also contact me, if you just like the tool. :)
+ 
+Stefan dot Behte at gmx dot net
+
+Released under the <A HREF="http://www.gnu.org/copyleft/gpl.txt">GPL-v2</A>
+</PRE>
+<BR>
+
+</BODY></HTML>

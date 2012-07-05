@@ -1,0 +1,119 @@
+<HTML><HEAD><TITLE>:: ge.mine.nu ::</TITLE></HEAD> 
+<BODY BGCOLOR=BLACK TEXT=WHITE ALINK=RED VLINK=GRAY LINK=LIGHTGREEN> 
+<H2> <A HREF="code/ifswitch">ifswitch</A> - network interface configuration switching tool v0.9.2 (81 Downloads)</H2>
+With this tool you can switch your w/lan config very fast; <BR>
+It was mainly written to offer very special functions like automatic mac-changing and adding static arp entries, <BR>
+which isn't possible with normal tools and startup scripts. It is intended to be used on an "unfriendly" network or in pentests :) <BR>
+ <BR>
+The following settings can be made in the config file: <BR>
+- interface ip (eth0_ip=... or eth0_ip=random or eth0_ip=random#pre.fix) <BR>
+- broadcast (eth0_broadcast=...) <BR>
+- netmask (eth0_netmask=...) <BR>
+- default gateway (defaultgate=...) <BR>
+- dns server(s), you can specify multiple lines (dns=ip) <BR>
+- mac address; complete, prefix or random (eth0_mac=aa:bb:cc:dd:ee:ff or eth0_mac=random or eth0_mac=random#pr:ef:ix) <BR>
+- static arp entries to prevent arp spoofing attacks, you can specify multiple lines (static_arp=ip#mac) <BR>
+- wlan ssid & wep key (eth0_ssid=ssid#key) <BR>
+ <BR>
+Sample config files: <BR>
+<A HREF="code/ifswitch-config1">lan</A>, <A HREF="code/ifswitch-config2">wlan</A> and <A HREF="code/ifswitch-config3">dhcp</A> <BR>
+ <BR>
+For every configuration, you have to put a file in your CONFDIR (which has to be specified in the header of ifswitch) <BR>
+I did it this way, because it allows you to easily create configs for different w/lans which you can send to others using it. <BR>
+You wouldn't like to share a huge config file with your private WEP key for your homelan, would you? <BR>
+ <BR>
+<H3>DO NO FORGET TO CREATE YOUR CONFDIR (/etc/ifswitch)!<BR>
+Merged from llog and wlog (previously written for wlan and lan configuration switching).<BR><H3> 
+
+ <BR>
+<H3>Changelog:</H3>
+<PRE>
+12.12.2005 - Started coding, alpha ready
+13.12.2005 - Fixed bug in addconfig()
+           - added showconfig() to the menu
+           - added [k]ill dhcpcd to the menu
+           - rewritten randmac, now you can use a prefix for randmac -> randmac 00:00:86
+           - added RANDOM / randip -> random ips possible, you can also use a prefix -> randip 192.168.0
+           - changed parseconfig() and addconfig() to work with randmac/randip
+15.12.2005 - added rotate command line switch, useful if you're pentesting ;)
+18.12.2005 - confirmed that WLAN mode works fine :)
+27.12.2005 - fixed typo with wlan
+           - fixed severe error with using macs
+03.01.2006 - created killdhcpcd()
+           - CONFDIR will now be created if it does not exist and you try adding an entry
+           - Released under the GPL-v2
+23.01.2006 - removed exit() when iwconfig isn't found: maybe someone just wants to configure a LAN 
+31.01.2006 - wrote an ebuild for Gentoo linux
+</PRE>
+ <BR>
+<H3>TODO:</H3> - exclude mode for RANDOM <BR>
+- check if RANDOM ip/mac is already there <BR>
+- use ip & netmask for calculation of random ip <BR>
+- add WPA(2) support <BR>
+ <BR>
+<H3>Known bugs:</H3> - When creating config files via hand you can get into trouble. Just use the menu dialog to create configs. <BR>
+ <BR>
+ <BR>
+<H2>You should use the menu, especially for creating configs!</H2><H3>Just run ifswitch without any comand line switches:</H3> <BR>
+ <BR>
+ifswitch - network interface config switcher v0.9.2 <BR>
+ <BR>
+[u]se existing config <BR>
+[s]how configs <BR>
+[a]dd network configuration <BR>
+[d]elete an existing config <BR>
+[t]est internet connectivity <BR>
+[k]ill running dhcpcd <BR>
+[r]estart pcmcia services <BR>
+[e]nd <BR>
+> <BR>
+ <BR>
+ <BR>
+Some command line modes are also available: <BR>
+ <BR>
+# ./ifswitch --help <BR>
+ifswitch - network interface config switcher v0.9.2 <BR>
+usage: ifswitch [Config-NR] [rotate] [time to wait between rotate] <BR>
+[-show] <BR>
+Command line mode is mostly only used for rotate-mode <BR>
+Call ifswitch without arguments to use the menu <BR>
+ <BR>
+# ./ifswitch -show <BR>
+ <BR>
+[1]: "School, WLAN, static ARP, random MAC" <BR>
+[2]: "Standart DHCP network" <BR>
+[3]: "22C3 Cable LAN, DHCP, static ARP, random MAC" <BR>
+ <BR>
+# ./ifswitch 1 <BR>
+ <BR>
+Setting mac de:ad:be:ef:ca:fe on interface eth0: OK <BR>
+Using essid WLAN with key 12345 on interface eth0: OK <BR>
+Setting ip 172.16.85.123 on interface eth0: OK <BR>
+Setting netmask 255.255.0.0 on interface eth0: OK <BR>
+Setting dns server 192.168.0.2: OK <BR>
+Setting default gateway 172.16.1.200: OK <BR>
+Adding static arp entry 192.168.0.2/00:11:22:33:44:55 : OK <BR>
+ <BR>
+ <BR>
+# ./ifswitch 3 rotate 60 <BR>
+ <BR>
+Setting random mac 00:21:12:32:cf:fa on interface eth0: OK <BR>
+Using DHCP auto configuration: OK <BR>
+Adding static arp entry 192.168.0.2/00:11:22:33:44:55 : OK <BR>
+ <BR>
+Setting random mac 00:18:31:4b:ca:01 on interface eth0: OK <BR>
+Using DHCP auto configuration: OK <BR>
+Adding static arp entry 192.168.0.2/00:11:22:33:44:55 : OK <BR>
+ <BR>
+... this will re-run the ifswitch configuration nr 3 every 60 seconds <BR>
+This is useful if you want to stay anonymous on a LAN ;) <BR>
+ <BR>
+<HR> <BR>
+Written by Stefan Behte <BR>
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions! <BR>
+Please also contact me, if you just like the tool. :) <BR>
+ <BR>
+Stefan dot Behte at gmx dot net <BR>
+ <BR>
+Released under the <A HREF="http://www.gnu.org/copyleft/gpl.txt">GPL-v2</A> <BR>
+</BODY></HTML>

@@ -1,0 +1,53 @@
+<HTML><HEAD><TITLE>:: ge.mine.nu ::</TITLE></HEAD>
+<BODY BGCOLOR=BLACK TEXT=WHITE ALINK=RED VLINK=GRAY LINK=LIGHTGREEN>
+
+<script type="text/javascript"><!--
+google_ad_client = "pub-3450986717914812";
+/* 728x15, Erstellt 18.06.10 */
+google_ad_slot = "7595731693";
+google_ad_width = 728;
+google_ad_height = 15;
+//-->
+</script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+
+<H3>Ebuild for 3ware "3dm2-10.2" (tested with "3ware Inc 9550SX SATA-RAID")</H3>
+<A HREF="http://bugs.gentoo.org/attachment.cgi?id=269835">3dm2-10.2.ebuild</A><BR>
+<PRE>
+
+<B>Installation:</B>
+mkdir -p /root/OVERLAY/sys-block/3dm2/files
+wget "http://bugs.gentoo.org/attachment.cgi?id=241017" -O /root/OVERLAY/sys-block/3dm2/files/3dm2.init
+wget "http://bugs.gentoo.org/attachment.cgi?id=241013" -O /root/OVERLAY/sys-block/3dm2/files/LSI.txt
+wget "http://bugs.gentoo.org/attachment.cgi?id=269835" -O /root/OVERLAY/sys-block/3dm2/3dm2-10.2.ebuild
+cd /root/OVERLAY/sys-block/3dm2
+PORTDIR_OVERLAY="/root/OVERLAY"
+ebuild 3dm2-10.2.ebuild digest merge
+
+/etc/init.d/3dm2 start
+rc-update add 3dm2 default
+
+<B>Uninstall:</B>
+/etc/init.d/3dm2 stop
+emerge -C 3dm2
+rm -fr /etc/3dm2
+
+I' pretty sure this will not be added to portage soon!
+Read the <A HREF="http://bugs.gentoo.org/show_bug.cgi?id=60690">bugtracker entry</A> about it.
+
+<HR>
+Original ebuild written/modified by Joshua Schmidlkofer/Rene Meier (and others?!)
+Modified by Stefan Behte
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!
+Please also contact me, if you just like the tool. :)
+ 
+Stefan dot Behte at gmx dot net
+
+Released under the <A HREF="http://www.gnu.org/copyleft/gpl.txt">GPL-v2</A>
+</PRE>
+<BR>
+
+</BODY></HTML>

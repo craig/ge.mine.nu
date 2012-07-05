@@ -1,0 +1,15 @@
+--- /etc/conf.d/rc	2006-02-27 19:54:46.000000000 +0100
++++ /etc/conf.d/rc	2006-02-27 19:53:51.000000000 +0100
+@@ -76,7 +76,11 @@
+ 
+ RC_DEVICE_TARBALL="yes"
+ 
++# SWAP_ERASE OPTION:
++# If set to "yes" the complete swap partition will be overwritten with 
++# zeros when halting the system
+ 
++RC_SWAP_ERASE="yes"
+ 
+ 
+ #
+

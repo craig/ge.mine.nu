@@ -1,0 +1,40 @@
+TD.normal
+{
+	background-color:WHITE;
+	border-style:solid;
+	border-width:1;
+	border-color:black;
+	font-family:Arial;
+	font-size:12;
+	color:black;
+	font-weight:bold;
+	text-align:center;
+}
+
+TD.hover
+{
+	background-color:LIGHTGREEN;
+	cursor:pointer;
+	border-style:solid;
+	border-width:1;
+	border-color:black;
+	font-family:Arial;
+	font-size:12;
+	color:black;
+	font-weight:bold;
+	text-align:center;
+}
+
+TD.oben
+{
+	background-color:LIGHTGREEN;
+	border-style:solid;
+	border-width:1;
+	border-color:black;
+	font-family:Arial;
+	font-size:14;
+	color:black;
+	font-weight:bold;
+	text-align:center;
+	cursor:default;
+}

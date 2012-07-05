@@ -1,0 +1,116 @@
+<HTML><HEAD><TITLE>:: ge.mine.nu ::</TITLE></HEAD>
+<BODY BGCOLOR=BLACK TEXT=WHITE ALINK=RED VLINK=GRAY LINK=LIGHTGREEN>
+
+<H2>Dell Latitude D400 with Gentoo Linux</H2>
+Well, I've got one from my boss and I had some trouble getting the Framebuffer Console, XORG and the video to work after reopening the lid.<BR>
+Here is my kernel-2.6.22-r6 <A HREF="config">config</A> and my <A HREF="xorg.conf">xorg.conf</A>.<BR>
+(I guess you want to change some stuff in the kernel config, as I build in IPSec and Bluetooth, and some IPtables / network stuff.)<BR>
+<HR>
+Install net-wireless/bcm43xx-fwcutter in order to get bcm43xx to work; do "ifconfig eth3 up" before trying anything wireless.<BR>
+FN+F2 works out of the box, watch you /var/log/messages :)<BR>
+The <A HREF="http://patches.aircrack-ng.org/bcm43xx-injection-linux-2.6.20.patch">bcm43xx-injection-linux-2.6.20.patch</A> works also fine with kernel 2.6.21 (not testet with 2.6.22 yet).<BR>
+<HR>
+You also need to install the <A HREF="http://www.geocities.com/stomljen/">915resolution</A> tool which fixes the faulty BIOS.<BR>
+My 915resolution config can be downloaded <A HREF="915resolution">here</A>.<BR>
+<HR>
+For CPU governours I recommend using ondemand (which is the default). Be sure to have the acpi USE-flag enabled!
+<PRE>
+emerge sys-power/cpufreqd
+emerge sys-power/cpufrequtils
+/etc/init.d/cpufrequtils start
+rc-update add cpufrequtils boot
+</PRE>
+<HR>
+For powersaving with USB also add the line:
+<PRE>
+"usbcore autosuspend=1"
+</PRE>
+to your bootloader.
+<HR>
+Enable power saving for the AC97 codec:<BR>
+<PRE>
+echo 'echo 1 > /sys/module/snd_ac97_codec/parameters/power_save' >> /etc/conf.d/local.start
+</PRE>
+<HR>
+More Power-saving methods:
+<PRE>
+echo 5 > /proc/sys/vm/laptop_mode
+echo 1500 > /proc/sys/vm/dirty_writeback_centisecs
+</PRE>
+For saving most power, you could also do cpufreq-info, see the lowest CPU frequency and then do cpufreq-set -f 600.
+<HR>
+To get the multimedia keys to work with your special X-config, follow the instructions I found at the <A HREF="http://gentoo-wiki.com/HOWTO_Use_Multimedia_Keys">gentoo-wiki HOWTO</A>.<BR>
+For me (fluxbox user!), this worked:
+<PRE>
+cat ~/.Xmodmap
+keycode 174 = XF86AudioLowerVolume
+keycode 176 = XF86AudioRaiseVolume
+keycode 160 = XF86AudioMute
+
+echo "/usr/bin/xmodmap $HOME/.Xmodmap" >> ~/.xsession
+
+tail -n3 ~/.fluxbox/keys:
+None XF86AudioLowerVolume :ExecCommand amixer -q set PCM 2- unmute
+None XF86AudioRaiseVolume :ExecCommand amixer -q set PCM 2+ unmute
+None XF86AudioMute :ExecCommand amixer -q set Master toggle
+</PRE>
+<HR>
+To get the video work properly after opening the lid, you'll need to do this:<BR>
+Only try with xf86-video-i810-1.7.4 (newer versions up to 2.1.1 are buggy and cannot switch VT!).
+First install the unstable vbetool version (currently 0.7):
+<PRE>
+echo "sys-apps/vbetool ~x86" >> /etc/portage/package.keywords
+emerge sys-apps/vbetool
+</PRE>
+Then create /etc/acpi/events/lid containing this:
+<PRE>
+event=button[ /]lid
+action=/etc/acpi/actions/lid
+</PRE>
+and /etc/acpi/actions/lid containing this:
+<PRE>
+#!/bin/bash
+lid_state=/proc/acpi/button/lid/LID/state
+test -e $lid_state || exit 0
+
+if grep open $lid_state &>/dev/null
+then
+	curcons=`fgconsole`
+	chvt 2
+	vbetool post
+	chvt $[curcons%6+1]
+	chvt $curcons
+fi
+					
+# leave this out, if you do not want your laptop to go to sleep when closing the lid
+if grep closed $lid_state &>/dev/null
+then
+	acpitool -s
+fi
+</PRE>
+Finally, do this:
+<PRE>
+chmod +x /etc/acpi/actions/lid 
+emerge sys-power/acpid
+rc-update add acpid default
+/etc/init.d/acpid start
+</PRE>
+<HR>
+I also STRONLY recommand to give <A HREF="http://www.linuxpowertop.org/">powertop</A> a try!<BR>
+In short words, it will find the programs that prevent your Laptop from sleeping ;)<BR>
+<BR>
+Generic info:<BR>
+- <A HREF="lspci">lspci output</A><BR>
+- <A HREF="cpuinfo">/proc/cpuinfo</A><BR>
+- BIOS Revision A08. You may Download an upgrade from Dell <A HREF="http://support.dell.com/support/downloads/format.aspx?c=us&l=en&s=gen&deviceid=3249&libid=1&releaseid=R104377&vercnt=2&formatcnt=0&SystemID=LAT_PNT_PM_D400&servicetag=&os=WW1&osl=GE&catid=-1&impid=-1">here</A>.<BR>
+<BR>
+<HR>
+<PRE>Written by Stefan Behte
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!
+Please also contact me, if you just like the tool. :)
+ 
+Stefan dot Behte at gmx dot net
+
+Released under the <A HREF="http://www.gnu.org/copyleft/gpl.txt">GPL-v2</A>
+</PRE>
+</BODY></HTML>

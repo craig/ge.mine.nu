@@ -1,0 +1,15 @@
+# this example will replace mode "4c" with 1280x768x24
+#replace=( "4d 1280 768 24" )
+
+# to replace more than one mode do something like this
+replace=(
+        "4d 1280 768 24"
+        "5c 1400 1050 16"
+        "54 1024 768 24"
+        "45 1024 768 16"
+)
+
+# if you want to log the output add the file here.
+# this will be overwritten at every boot
+log="/var/log/915resolution"
+

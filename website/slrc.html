@@ -1,0 +1,127 @@
+<HTML><HEAD><TITLE>:: ge.mine.nu ::</TITLE></HEAD>
+<BODY BGCOLOR=BLACK TEXT=WHITE ALINK=RED VLINK=GRAY LINK=LIGHTGREEN>
+
+<script type="text/javascript"><!--
+google_ad_client = "pub-3450986717914812";
+/* 728x15, Erstellt 18.06.10 */
+google_ad_slot = "7595731693";
+google_ad_width = 728;
+google_ad_height = 15;
+//-->
+</script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+<H2> <A HREF="code/slrc">slrc</A> - Simple [Slow?! *g] Linux Rar Cracker v0.2 (70 Downloads)</H2>
+I wrote this to practise/test bash getopts and also because I didn't find any<BR>
+rar cracker for linux when I wanted to check a file against a wordlist.<BR>
+I know doing it this way is slow but I wanted a quick hack ;)<BR>
+<BR>
+<B>Features:</B><BR>
+- wordlist checks<BR>
+- brute-force checks (uses john as stdin)<BR>
+- restore for brute-force<BR>
+- statistical information during wordlist crack ([current try/tries left/total tries] [tries/s] [current runtime/expected total runtime])<BR>
+- statistical information during brute-force ([current try] [tries/s])<BR>
+- being slow ;)<BR>
+<BR>
+<A HREF="code/test.rar">testfile 1</A><BR>
+<A HREF="code/test2.rar">testfile 2</A><BR>
+<BR>
+<H2>Examples:</H2><BR>
+<B>Wordlist mode using john's wordlist:</B><BR>
+<BR>
+[sb@develbox ~/slrc]$ ./slrc -f test.rar -w ~/john/password.lst<BR>
+<BR>
+simple linux rar cracker (slrc) v0.2 by Stefan Behte (http://ge.mine.nu)<BR>
+<BR>
+[1/2296/2297] [1/s] [2/2296s]: #!comment: This list has been compiled by Solar Designer of Openwall Project,<BR>
+[2/2295/2297] [1/s] [2/2295s]: #!comment: http://www.openwall.com/wordlists/<BR>
+[3/2294/2297] [1/s] [2/2294s]: #!comment:<BR>
+[4/2293/2297] [1/s] [3/2293s]: #!comment: This is a list of passwords most commonly seen on a set of Unix<BR>
+[5/2292/2297] [1/s] [3/2292s]: #!comment: systems in mid-1990's, sorted for decreasing number of occurrences<BR>
+[6/2291/2297] [1/s] [4/2291s]: #!comment: (that is, more common passwords are listed first).
+[7/2290/2297] [1/s] [4/2290s]: #!comment:<BR>
+[8/2289/2297] [2/s] [4/1144s]: #!comment: Last update: 1998/12/02 (2289 entries)<BR>
+[9/2288/2297] [2/s] [4/1144s]: 12345<BR>
+[10/2287/2297] [2/s] [4/1143s]: abc123<BR>
+[11/2286/2297] [2/s] [5/1143s]: password<BR>
+[12/2285/2297] [2/s] [5/1142s]: passwd<BR>
+[13/2284/2297] [2/s] [5/1142s]: 123456<BR>
+[14/2283/2297] [2/s] [5/1141s]: newpass<BR>
+[15/2282/2297] [3/s] [5/760s]: notused<BR>
+[16/2281/2297] [3/s] [5/760s]: Hockey<BR>
+[17/2280/2297] [3/s] [5/760s]: internet<BR>
+[18/2279/2297] [3/s] [5/759s]: asshole<BR>
+[19/2278/2297] [3/s] [6/759s]: Maddock<BR>
+[20/2277/2297] [3/s] [6/759s]: 12345678<BR>
+[21/2276/2297] [3/s] [6/758s]: newuser<BR>
+[22/2275/2297] [3/s] [6/758s]: computer<BR>
+[23/2274/2297] [3/s] [6/758s]: Internet<BR>
+[24/2273/2297] [4/s] [6/568s]: Mickey<BR>
+[25/2272/2297] [4/s] [6/568s]: qwerty<BR>
+[26/2271/2297] [4/s] [6/567s]: fiction<BR>
+[27/2270/2297] [3/s] [7/756s]: Cowboys<BR>
+[28/2269/2297] [4/s] [7/567s]: Jordan<BR>
+[29/2268/2297] [4/s] [7/567s]: Hatton<BR>
+[30/2267/2297] [4/s] [7/566s]: test<BR>
+<BR>
+Password found: test<BR>
+<BR>
+<BR>
+<BR>
+
+<B>Brute force mode:</B><BR>
+<BR>
+[sb@develbox ~/slrc]$ ./slrc -f test2.rar -i 4:digits<BR>
+<BR>
+simple linux rar cracker (slrc) v0.2 by Stefan Behte (http://ge.mine.nu)<BR>
+<BR>
+Warning: MaxLen = 8 is too large for the current hash type, reduced to 4<BR>
+words: 11110  time: 0:00:00:00  w/s: 18830  current: 992<BR>
+[1] [1/s]: 1952<BR>
+[2] [1/s]: 2252<BR>
+[3] [1/s]: 2253<BR>
+[4] [2/s]: 2222<BR>
+[5] [2/s]: 2221<BR>
+[6] [3/s]: 2406<BR>
+[7] [3/s]: 2405<BR>
+[8] [4/s]: 2427<BR>
+[9] [3/s]: 2424<BR>
+[10] [3/s]: 1234<BR>
+[11] [3/s]: 1235<BR>
+[12] [4/s]: 1213<BR>
+[13] [4/s]: 1211<BR>
+[14] [4/s]: 1969<BR>
+[15] [5/s]: 1960<BR>
+[16] [5/s]: 1953<BR>
+[17] [5/s]: 123<BR>
+[18] [6/s]: 1112<BR>
+[...]<BR>
+[1898] [11/s]: 5500<BR>
+[1899] [11/s]: 5506<BR>
+[1900] [11/s]: 5501<BR>
+[1901] [11/s]: 5503<BR>
+[1902] [11/s]: 5507<BR>
+[1903] [11/s]: 5502<BR>
+[1904] [11/s]: 5504<BR>
+[1905] [11/s]: 6969<BR>
+<BR>
+Password found: 6969<BR>
+<BR>
+
+<B>Have fun!</B>
+<BR>
+<HR>
+
+Written by Stefan Behte<BR>
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!<BR>
+Please also contact me, if you just like the tool. :)<BR>
+ <BR>
+Stefan dot Behte at gmx dot net<BR>
+<BR>
+Released under the <A HREF="http://www.gnu.org/copyleft/gpl.txt">GPL-v2</A>
+<BR>
+
+</BODY></HTML>

@@ -1,0 +1,36 @@
+<HTML><HEAD><TITLE>:: ge.mine.nu ::</TITLE></HEAD>
+<BODY BGCOLOR=BLACK TEXT=WHITE ALINK=RED VLINK=GRAY LINK=LIGHTGREEN>
+
+<H3>Ebuild for 3ware "tw_firmware-9.4.0.1"</H3>
+<A HREF="http://bugs.gentoo.org/attachment.cgi?id=113935">tw_firmware-9.4.0.1.ebuild</A><BR>
+<PRE>
+
+<B>Installation:</B>
+mkdir -p /root/OVERLAY/sys-block/tw_firmware
+wget "http://bugs.gentoo.org/attachment.cgi?id=113935" -O /root/OVERLAY/sys-block/tw_firmware/tw_firmware-9.4.0.1.ebuild
+PORTDIR_OVERLAY="/root/OVERLAY"
+
+cd /root/OVERLAY/sys-block/tw_firmware
+wget http://www.3ware.com/download/Escalade9650SE-Series/9.4.0.1/9.4.0.1-9650SE-Upgrade.zip -O /usr/portage/distfiles/9.4.0.1-9650SE-Upgrade.zip
+
+ebuild tw_firmware-9.4.0.1.ebuild digest
+ebuild tw_firmware-9.4.0.1.ebuild merge
+
+<B>Uninstall:</B>
+emerge -C tw_firmware
+
+I hope this will be added to portage soon!
+Read the <A HREF="http://bugs.gentoo.org/show_bug.cgi?id=171634">bugtracker entry</A> about it.
+
+<HR>
+Ebuild created by Stefan Behte
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!
+Please also contact me, if you just like the tool. :)
+ 
+Stefan dot Behte at gmx dot net
+
+Released under the <A HREF="http://www.gnu.org/copyleft/gpl.txt">GPL-v2</A>
+</PRE>
+<BR>
+
+</BODY></HTML>

@@ -1,0 +1,102 @@
+#!/bin/bash
+# randmac - Script that gives your interface a new MAC-Address.
+# It's useful if you've cloned your VMWare Images and wonder why you
+# have problems reaching the VMs (they have the same MAC adresses).
+#
+# If you plan changing your MAC regularly, have a look at ifswitch
+# (http://ge.mine.nu/ifswitch.html)
+#
+# randmac is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# randmac is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with randmac; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+# Copyright (c) 2006 by Stefan Behte
+#
+#
+# To run this on startup do:
+#
+# SLES9 / SuSE:
+# wget http://ge.mine.nu/code/randmac -O /etc/init.d/randmac
+# chmod +x /etc/init.d/randmac
+# cd /etc/init.d/rc3.d
+# ln -S ./S99randmac ../randmac
+#
+# Gentoo:
+# wget http://ge.mine.nu/code/randmac -O /etc/init.d/randmac
+# chmod +x /etc/init.d/randmac
+# echo "/etc/init.d/randmac" >> /etc/conf.d/local.start
+#
+# Debian / Ubuntu: 
+# wget http://ge.mine.nu/code/randmac -O /etc/init.d/randmac
+# chmod +x /etc/init.d/randmac
+# echo "/etc/init.d/randmac" >> /etc/init.d/rc.local
+# chmod 755 /etc/init.d/rc.local
+# ln -s /etc/init.d/rc.local /etc/rcS.d/S99rc.local
+#
+
+rndmac()
+{
+ if [ "$1" != "" ]
+ then
+  newmac="$1"
+  j=2
+ else
+  newmac=
+  j=0
+ fi
+
+ while [ 1 ]
+ do
+  if [ "${#newmac}" = "17" ]		# a mac has 6 bytes + 5 delimiters -> 17 chars -> 00:11:22:33:44:55
+  then
+   break
+  fi
+
+  if [ "$j" = "2" ]
+  then
+   newmac="${newmac}":
+   j=0
+  fi
+
+  nr=$[$RANDOM % 16]
+  if [ "$nr" -lt 10 ]; then newmac="${newmac}${nr}"; fi
+  if [ "$nr" = "10" ]; then newmac="${newmac}a"; fi
+  if [ "$nr" = "11" ]; then newmac="${newmac}b"; fi
+  if [ "$nr" = "12" ]; then newmac="${newmac}c"; fi
+  if [ "$nr" = "13" ]; then newmac="${newmac}d"; fi
+  if [ "$nr" = "14" ]; then newmac="${newmac}e"; fi
+  if [ "$nr" = "15" ]; then newmac="${newmac}f"; fi
+  j=$[$j + 1]
+
+ done
+ echo "$newmac"
+}
+
+setmac()
+{
+	ifconfig $1 down
+	ifconfig $1 hw ether `rndmac $2`
+	ifconfig $1 up
+}
+
+# some network cards/routers have problems when the mac does not start with 00, so we use it as prefix:
+setmac eth0 00
+
+# dhcpcd
+#
+# or:
+#
+# ifconfig eth0 192.168.2.66
+# route add default gw 192.168.2.1
+# echo "nameserver 192.168.2.225" > /etc/resolv.conf
+

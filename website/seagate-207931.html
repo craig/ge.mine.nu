@@ -1,0 +1,129 @@
+<HTML><HEAD><TITLE>:: ge.mine.nu ::</TITLE></HEAD>
+<BODY BGCOLOR=BLACK TEXT=WHITE ALINK=RED VLINK=GRAY LINK=LIGHTGREEN>
+
+<script type="text/javascript"><!--
+google_ad_client = "pub-3450986717914812";
+/* 728x15, Erstellt 18.06.10 */
+google_ad_slot = "7595731693";
+google_ad_width = 728;
+google_ad_height = 15;
+//-->
+</script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+
+<H2><A HREF="code/seagate-207931-3.sh">seagate-207931.sh</A> - Check if your system uses disks affected by Seagate KB #207931</H2>
+Seagate drives (Barracuda 7200.11, DiamondMax 22, Barracuda ES.2 SATA, SV35) fail after powering on, see <A HREF="http://seagate.custkb.com/seagate/crm/selfservice/search.jsp?Tab=search&Module=selfservice&TargetLanguage=selfservice&DocId=207931&NewLang=en">KB #207931</A>.<BR>
+<BR>
+<A HREF="code/seagate-207931.sh">download v1 here</A><BR>
+<A HREF="code/seagate-207931-2.sh">download v2 here</A><BR>
+<A HREF="code/seagate-207931-3.sh">download v3 here</A><BR><BR>
+There is no Linux tool (yet) to help the overworked admin, and as I do not want to check every server by hand, I wrote this.<BR>
+You have to use the corresponding RAID-Tool in order to get the model, serial and firmware version.<BR>
+<BR>
+<B>Needs to be run as root!</B>
+<BR><BR>
+<B>UPDATE #1: SEAGATE has an <A HREF="https://apps1.seagate.com/rms_af_srl_chk/">online check</A> now!</B><BR>
+<B>UPDATE #2: Script v2 available, it automatically queries the Seagate DB.</B><BR>
+<B>UPDATE #3: Seagates serial checker is currently down.</B><BR>
+<B>UPDATE #4: Seagates serial checker now uses captchas. DO NOT RELY ON v2!</B><BR>
+<B>UPDATE #5: v3 detects if the device cannot be read (hdparm), serial checking removed.</B><BR>
+<B>UPDATE #6: Firmware for NS finally available: <A HREF="http://seagate.custkb.com/seagate/crm/selfservice/search.jsp?DocId=207963">#207963</A><BR>
+<BR>
+<B>current support:</B><BR>
+- hdparm<BR>
+- tw_cli (3ware)<BR>
+- arcconf (Adaptec)<BR>
+<BR>
+
+<B>Hint:</B><BR>
+<PRE>$ ssh host "curl -s https://deploysrv/seagate-207931.sh | sh"</PRE>
+<BR>
+<B>Return codes:</B><BR><BR>
+0: everything ok<BR>
+1: one of the models was found (you still need to check the firmware version)<BR>
+<BR>
+If you have code additions, mail me, I'd like to add support for more CLI raid tools.<BR>
+Please supply me with complete output - or just buy me an areca, lsi and I'll add support for those, too ;)<BR>
+<BR>
+<B>Affected models:</B><BR><BR>
+<table border="1" cellspacing="0" cellpadding="0">
+  <tr>
+    <td width="187" valign="top"><p>Barracuda 7200.11<br />
+      ST31000340AS<br />
+      ST31000640AS<br />
+      ST3750330AS<br />
+
+      ST3750630AS<br />
+      ST3640330AS<br />
+      ST3640630AS<br />
+      ST3500320AS<br />
+      ST3500620AS<br />
+    ST3500820AS<br />
+
+    ST31500341AS<br />
+ST31000333AS<br />
+ST3640323AS<br />
+ST3640623AS<br />
+ST3320613AS<br />
+ST3320813AS<br />
+ST3160813AS </p>
+    </td>
+
+    <td width="206" valign="top"><p>Barracuda ES.2 SATA<br />
+      ST31000340NS<br />
+      ST3750330NS<br />
+      ST3500320NS<br />
+      ST3250310NS</p></td>
+    <td width="197" valign="top"><p>DiamondMax 22<br />
+
+      STM31000340AS<br />
+      STM31000640AS<br />
+      STM3750330AS<br />
+      STM3750630AS<br />
+      STM3500320AS<br />
+      STM3500620AS<br />
+
+      STM3500820AS<br />
+      STM31000334AS<br />
+STM3320614AS<br />
+STM3160813AS</p>
+    </td>
+  </tr>
+</table>
+
+<BR><BR>
+<B>Example run with a 3ware 9500s:</B><BR>
+<BR>
+<PRE>[root@develbox ~/dev]# sh seagate-207931.sh
+
+seagate-207931.sh v1 by Stefan Behte (http://ge.mine.nu)
+
+hdparm /dev/sda ok
+hdparm /dev/sdb ok
+3ware (tw_cli) /c0/p0: ok
+3ware (tw_cli) /c0/p1: ok
+Sorry, but you're affected:
+/c0/p2 Model = ST3500320NS /c0/p2 Serial = 9QM0HMYP /c0/p2 Firmware Version = SN04
+
+Sorry, but you're affected:
+/c0/p3 Model = ST3500320NS /c0/p3 Serial = 9QM0DZP5 /c0/p3 Firmware Version = SN04
+
+arcconf not found
+
+[root@develbox ~/dev]# 
+</PRE><BR>
+<HR>
+
+Written by Stefan Behte<BR>
+Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!<BR>
+Please also contact me, if you just like the tool. :)<BR>
+ <BR>
+Stefan dot Behte at gmx dot net<BR>
+<BR>
+Released under the <A HREF="http://www.gnu.org/copyleft/gpl.txt">GPL-v2</A>
+<BR>
+
+</BODY></HTML>
