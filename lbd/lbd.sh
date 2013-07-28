@@ -1,7 +1,7 @@
 #!/bin/bash
 # lbd (load balancing detector) detects if a given domain uses
 # DNS and/or HTTP Load-Balancing (via Server: and Date: header and diffs between server answers)
-# Copyright (C) 2010 Stefan Behte
+# Copyright (C) 2010-2013 Stefan Behte
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -30,6 +30,8 @@
 #	- fix indenting
 # 0.3:	- fix bug if dns server returns same IP multiple times
 #         (fix by bit bori, thanks!)
+#	- fix bug if there is no date header
+#	  (fix by Paul Rib, thanks!)
 
 QUERIES=50
 DOMAIN=$1
@@ -93,6 +95,12 @@ for ((i=0 ; i<$QUERIES ; i++))
 do
 	D=`printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN 80 | grep "Date:" | awk '{print $6}'`
 	printf "$D, "
+
+        if [  "$D" == "" ]
+	then
+		echo "No date header found, skipping."
+		break
+	fi
 	
 	Df=$(echo " $D" | sed -e 's/:0/:/g' -e 's/ 0/ /g')
 	D1=$(echo ${Df} | awk -F: '{print $1}')
