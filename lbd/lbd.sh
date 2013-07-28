@@ -28,14 +28,15 @@
 # 0.1:	- initial release
 # 0.2:	- fix license for fedora 
 #	- fix indenting
-#
+# 0.3:	- fix bug if dns server returns same IP multiple times
+#         (fix by bit bori, thanks!)
 
 QUERIES=50
 DOMAIN=$1
 METHODS=""
 
 echo 
-echo "lbd - load balancing detector 0.2 - Checks if a given domain uses load-balancing."
+echo "lbd - load balancing detector 0.3 - Checks if a given domain uses load-balancing."
 echo "                                    Written by Stefan Behte (http://ge.mine.nu)"
 echo "                                    Proof-of-concept! Might give false positives."
 
@@ -47,7 +48,7 @@ then
 fi
 
 echo -e -n "\nChecking for DNS-Loadbalancing:"
-NR=`host $DOMAIN | grep -c "has add"`
+NR=`host $DOMAIN | grep "has add" | uniq | wc -l`
 
 if [ $NR -gt 1 ]
 then
@@ -72,7 +73,7 @@ do
 	cat .nlog >> .log
 done
 
-NR=`sort .log | uniq | grep -c "Server:"`
+NR=`sort .log | uniq | grep "Server:" | uniq | wc -l`
 
 if [ $NR -gt 1 ]
 then
