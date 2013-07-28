@@ -54,7 +54,7 @@ if [ $NR -gt 1 ]
 then
 	METHODS="DNS"
 	echo " FOUND"
-	host $DOMAIN | grep "has add"
+	host $DOMAIN | grep "has add" | uniq
 	echo
 else
 	echo " NOT FOUND"
@@ -73,7 +73,7 @@ do
 	cat .nlog >> .log
 done
 
-NR=`sort .log | uniq | grep "Server:" | uniq | wc -l`
+NR=`sort .log | uniq | grep -c "Server:"`
 
 if [ $NR -gt 1 ]
 then
