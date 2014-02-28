@@ -35,6 +35,13 @@
 
 QUERIES=50
 DOMAIN=$1
+PORT=${2-80} # Use default port 80, if not given
+if [ "$3" = "https" ]
+then
+	HTTPS=true
+else
+	HTTPS=false
+fi
 METHODS=""
 
 echo 
@@ -44,7 +51,7 @@ echo "                                    Proof-of-concept! Might give false pos
 
 if [ "$1" = "" ]
 then
-	echo "usage: $0 [domain]"
+	echo "usage: $0 domain [port] [https]"
 	echo
 	exit -1
 fi
@@ -65,7 +72,13 @@ fi
 echo -e "Checking for HTTP-Loadbalancing ["Server"]: "
 for ((i=0 ; i< $QUERIES ; i++))
 do
-	printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN 80 > .nlog
+	if [ $HTTPS = true ]
+	then
+		(printf "HEAD / HTTP/1.0\r\n\r\n"; sleep 1) | openssl s_client -host $DOMAIN -port $PORT -quiet > .nlog 2> /dev/null
+	else
+		printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN $PORT > .nlog
+	fi
+
 	S=`grep -i "Server:" .nlog | awk -F: '{print $2}'`
 
 	if ! grep "`echo ${S}| cut -b2-`" .log &>/dev/null
@@ -93,7 +106,12 @@ D4=
 
 for ((i=0 ; i<$QUERIES ; i++))
 do
-	D=`printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN 80 | grep "Date:" | awk '{print $6}'`
+	if [ $HTTPS = true ]
+	then
+		D=`(printf "HEAD / HTTP/1.0\r\n\r\n"; sleep 1) | openssl s_client -host $DOMAIN -port $PORT -quiet 2> /dev/null | grep "Date:" | awk '{print $6}'`
+	else
+		D=`printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN $PORT | grep "Date:" | awk '{print $6}'`
+	fi
 	printf "$D, "
 
         if [  "$D" == "" ]
@@ -128,7 +146,12 @@ done
 echo -e -n "\nChecking for HTTP-Loadbalancing ["Diff"]: "
 for ((i=0 ; i<$QUERIES ; i++))
 do
-	printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN 80 | grep -v -e "Date:" -e "Set-Cookie" > .nlog
+	if [ $HTTPS = true ]
+	then
+		(printf "HEAD / HTTP/1.0\r\n\r\n"; sleep 1) | openssl s_client -host $DOMAIN -port $PORT -quiet 2> /dev/null | grep -v -e "Date:" -e "Set-Cookie" > .nlog
+	else
+		printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN $PORT | grep -v -e "Date:" -e "Set-Cookie" > .nlog
+	fi
 	
 	if ! cmp .log .nlog &>/dev/null && [ -e .log ]
 	then
