@@ -1,7 +1,7 @@
 #!/bin/bash
 # lbd (load balancing detector) detects if a given domain uses
 # DNS and/or HTTP Load-Balancing (via Server: and Date: header and diffs between server answers)
-# Copyright (C) 2010-2013 Stefan Behte
+# Copyright (C) 2010-2014 Stefan Behte
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 # Contact me, if you have any new ideas, bugs/bugfixes, recommondations or questions!
 # Please also contact me, if you just like the tool. :)
 #  
-# Stefan dot Behte at gmx dot net
+# craig at haquarter dot de
 #
 # 0.1:	- initial release
 # 0.2:	- fix license for fedora 
@@ -32,6 +32,8 @@
 #         (fix by bit bori, thanks!)
 #	- fix bug if there is no date header
 #	  (fix by Paul Rib, thanks!)
+# 0.4:	- support HTTPs, support different ports
+#	  (thanks Bharadwaj Machiraju)
 
 QUERIES=50
 DOMAIN=$1
@@ -45,13 +47,13 @@ fi
 METHODS=""
 
 echo 
-echo "lbd - load balancing detector 0.3 - Checks if a given domain uses load-balancing."
+echo "lbd - load balancing detector 0.4 - Checks if a given domain uses load-balancing."
 echo "                                    Written by Stefan Behte (http://ge.mine.nu)"
 echo "                                    Proof-of-concept! Might give false positives."
 
 if [ "$1" = "" ]
 then
-	echo "usage: $0 domain [port] [https]"
+	echo "usage: $0 domain [port] {https}"
 	echo
 	exit -1
 fi
@@ -69,14 +71,14 @@ else
 	echo " NOT FOUND"
 fi
 
-echo -e "Checking for HTTP-Loadbalancing ["Server"]: "
+echo -e "Checking for HTTP-Loadbalancing [Server]: "
 for ((i=0 ; i< $QUERIES ; i++))
 do
 	if [ $HTTPS = true ]
 	then
-		(printf "HEAD / HTTP/1.0\r\n\r\n"; sleep 1) | openssl s_client -host $DOMAIN -port $PORT -quiet > .nlog 2> /dev/null
+		printf "HEAD / HTTP/1.1\r\nhost: $DOMAIN\r\nConnection: close\r\n\r\n" | openssl s_client -host $DOMAIN -port $PORT -quiet > .nlog 2> /dev/null
 	else
-		printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN $PORT > .nlog
+		printf "HEAD / HTTP/1.1\r\nhost: $DOMAIN\r\nConnection: close\r\n\r\n" | nc $DOMAIN $PORT > .nlog 2>/dev/null
 	fi
 
 	S=`grep -i "Server:" .nlog | awk -F: '{print $2}'`
@@ -101,16 +103,16 @@ echo
 rm .nlog .log
 
 
-echo -e -n "Checking for HTTP-Loadbalancing ["Date"]: "
+echo -e -n "Checking for HTTP-Loadbalancing [Date]: "
 D4=
 
 for ((i=0 ; i<$QUERIES ; i++))
 do
 	if [ $HTTPS = true ]
 	then
-		D=`(printf "HEAD / HTTP/1.0\r\n\r\n"; sleep 1) | openssl s_client -host $DOMAIN -port $PORT -quiet 2> /dev/null | grep "Date:" | awk '{print $6}'`
+		D=`printf "HEAD / HTTP/1.1\r\nhost: $DOMAIN\r\nConnection: close\r\n\r\n" | openssl s_client -host $DOMAIN -port $PORT -quiet 2> /dev/null | grep "Date:" | awk '{print $6}'`
 	else
-		D=`printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN $PORT | grep "Date:" | awk '{print $6}'`
+		D=`printf "HEAD / HTTP/1.1\r\nhost: $DOMAIN\r\nConnection: close\r\n\r\n" | nc $DOMAIN $PORT 2>/dev/null | grep "Date:" | awk '{print $6}'`
 	fi
 	printf "$D, "
 
@@ -142,15 +144,14 @@ do
 	fi
 done
 
-
-echo -e -n "\nChecking for HTTP-Loadbalancing ["Diff"]: "
+echo -e -n "\nChecking for HTTP-Loadbalancing [Diff]: "
 for ((i=0 ; i<$QUERIES ; i++))
 do
 	if [ $HTTPS = true ]
 	then
-		(printf "HEAD / HTTP/1.0\r\n\r\n"; sleep 1) | openssl s_client -host $DOMAIN -port $PORT -quiet 2> /dev/null | grep -v -e "Date:" -e "Set-Cookie" > .nlog
+		printf "HEAD / HTTP/1.1\r\nhost: $DOMAIN\r\nConnection: close\r\n\r\n" | openssl s_client -host $DOMAIN -port $PORT -quiet 2> /dev/null | grep -v -e "Date:" -e "Set-Cookie" > .nlog
 	else
-		printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN $PORT | grep -v -e "Date:" -e "Set-Cookie" > .nlog
+		printf "HEAD / HTTP/1.1\r\nhost: $DOMAIN\r\nConnection: close\r\n\r\n" | nc $DOMAIN $PORT 2>/dev/null | grep -v -e "Date:" -e "Set-Cookie" > .nlog
 	fi
 	
 	if ! cmp .log .nlog &>/dev/null && [ -e .log ]
