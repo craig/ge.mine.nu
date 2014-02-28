@@ -35,6 +35,7 @@
 
 QUERIES=50
 DOMAIN=$1
+PORT=${2-80} # Use default port 80, if not given
 METHODS=""
 
 echo 
@@ -44,7 +45,7 @@ echo "                                    Proof-of-concept! Might give false pos
 
 if [ "$1" = "" ]
 then
-	echo "usage: $0 [domain]"
+	echo "usage: $0 domain [port]"
 	echo
 	exit -1
 fi
@@ -65,7 +66,7 @@ fi
 echo -e "Checking for HTTP-Loadbalancing ["Server"]: "
 for ((i=0 ; i< $QUERIES ; i++))
 do
-	printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN 80 > .nlog
+	printf "HEAD / HTTP/1.1\r\n\r\n" | nc $DOMAIN $PORT > .nlog
 	S=`grep -i "Server:" .nlog | awk -F: '{print $2}'`
 
 	if ! grep "`echo ${S}| cut -b2-`" .log &>/dev/null
@@ -93,7 +94,7 @@ D4=
 
 for ((i=0 ; i<$QUERIES ; i++))
 do
-	D=`printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN 80 | grep "Date:" | awk '{print $6}'`
+	D=`printf "HEAD / HTTP/1.1\r\n\r\n" | nc $DOMAIN $PORT | grep "Date:" | awk '{print $6}'`
 	printf "$D, "
 
         if [  "$D" == "" ]
@@ -128,7 +129,7 @@ done
 echo -e -n "\nChecking for HTTP-Loadbalancing ["Diff"]: "
 for ((i=0 ; i<$QUERIES ; i++))
 do
-	printf "HEAD / HTTP/1.0\r\n\r\n" | nc $DOMAIN 80 | grep -v -e "Date:" -e "Set-Cookie" > .nlog
+	printf "HEAD / HTTP/1.1\r\n\r\n" | nc $DOMAIN $PORT | grep -v -e "Date:" -e "Set-Cookie" > .nlog
 	
 	if ! cmp .log .nlog &>/dev/null && [ -e .log ]
 	then
