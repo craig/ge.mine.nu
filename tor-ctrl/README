@@ -1,5 +1,8 @@
 tor-ctrl is included in tor releases >= 0.2.0.9-alpha. Read the changelog. :)
 
+https://github.com/torproject/tor/commit/4807d8c9665aeaef4fece17495a0256745d6477c
+You may also want to check out https://github.com/adrelanos/tor-ctrl which is currently being maintained.
+
 tor-ctrl is a commandline tool for executing commands on a tor server via the controlport.
 In order to get this to work, add "ControlPort 9051" and "CookieAuthentication 1" to your torrc and reload tor.
 Or - if you want a fixed password - leave out "CookieAuthentication 1" and use the following line to create
